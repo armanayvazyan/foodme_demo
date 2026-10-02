@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useEffect, useMemo, useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Banknote, CreditCard, Wallet } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -74,7 +74,7 @@ export function OrderDeliveryForm({
   const {
     register,
     handleSubmit,
-    watch,
+    control,
     setValue,
     getValues,
     formState: { errors },
@@ -108,9 +108,11 @@ export function OrderDeliveryForm({
     }
   }, [defaultContact, getValues, setValue]);
 
-  const deliveryMethod = watch("deliveryMethod");
-  const allowedMethods: DeliveryMethod[] =
-    deliveryMethods && deliveryMethods.length > 0 ? deliveryMethods : ["DELIVERY", "TAKEAWAY"];
+  const deliveryMethod = useWatch({ control, name: "deliveryMethod" });
+  const allowedMethods = useMemo<DeliveryMethod[]>(
+    () => (deliveryMethods && deliveryMethods.length > 0 ? deliveryMethods : ["DELIVERY", "TAKEAWAY"]),
+    [deliveryMethods],
+  );
 
   useEffect(() => {
     if (!allowedMethods.includes(deliveryMethod)) {

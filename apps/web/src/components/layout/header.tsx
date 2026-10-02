@@ -2,7 +2,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Logo } from "@/components/layout/logo";
 import { MapPin, Search, ShoppingCart } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
-import { useAuth } from "@/providers/auth-provider";
+import { useAuth } from "@/providers/auth-context";
 
 export function Header() {
   const location = useLocation();

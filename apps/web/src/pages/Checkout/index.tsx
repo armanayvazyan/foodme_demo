@@ -9,7 +9,7 @@ import { CheckoutPriceSummary } from "@/components/sections/checkout-price-summa
 import { OrderDeliveryForm } from "@/components/sections/order-delivery-form";
 import { Button } from "@/components/ui/button";
 import { useCart, clearCart } from "@/hooks/useCart";
-import { useAuth } from "@/providers/auth-provider";
+import { useAuth } from "@/providers/auth-context";
 import type { CheckoutFormValues } from "@/schemas/checkout-schema";
 import type { OrderDto } from "@/types";
 

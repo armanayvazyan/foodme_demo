@@ -29,14 +29,16 @@ export function DishModal({ dish, onOpenChange, onChefMismatch }: DishModalProps
   const closeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const minQuantity = Math.max(dish?.minimumOrderCount ?? 1, 1);
 
-  useEffect(() => {
+  const [prevDish, setPrevDish] = useState(dish);
+  if (prevDish !== dish) {
+    setPrevDish(dish);
     if (dish) {
       setQuantity(minQuantity);
       setSelectedAdditions([]);
       setJustAdded(false);
       setAddError(null);
     }
-  }, [dish, minQuantity]);
+  }
 
   useEffect(() => {
     return () => window.clearTimeout(closeTimer.current);

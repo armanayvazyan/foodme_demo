@@ -4,7 +4,7 @@ import { Check, ChefHat, Package, Truck, X } from "lucide-react";
 import { foodmeApi } from "@/api/foodme";
 import { Button } from "@/components/ui/button";
 import { formatAmd } from "@/lib/utils";
-import { useAuth } from "@/providers/auth-provider";
+import { useAuth } from "@/providers/auth-context";
 
 const STEPS = [
   { key: "NEW", label: "Received", Icon: Package },

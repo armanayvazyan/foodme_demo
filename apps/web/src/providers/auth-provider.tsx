@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { foodmeApi } from "@/api/foodme";
 import { ApiRequestError } from "@/api/client";
 import {
@@ -7,18 +7,7 @@ import {
   readStoredAuth,
   writeStoredAuth,
 } from "@/lib/auth-storage";
-import type { CustomerLoginRequest, CustomerProfile, CustomerRegisterRequest } from "@/types";
-
-interface AuthContextValue {
-  customer: CustomerProfile | null;
-  token: string | null;
-  isAuthenticated: boolean;
-  login: (payload: CustomerLoginRequest) => Promise<void>;
-  register: (payload: CustomerRegisterRequest) => Promise<void>;
-  logout: () => void;
-}
-
-const AuthContext = createContext<AuthContextValue | null>(null);
+import { AuthContext, type AuthContextValue } from "@/providers/auth-context";
 
 function readState() {
   const stored = readStoredAuth();
@@ -70,12 +59,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }), [customer, token]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
-
-export function useAuth() {
-  const ctx = useContext(AuthContext);
-  if (!ctx) {
-    throw new Error("useAuth must be used within AuthProvider");
-  }
-  return ctx;
 }

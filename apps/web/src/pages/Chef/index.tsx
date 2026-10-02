@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { foodmeApi } from "@/api/foodme";
@@ -37,10 +37,12 @@ export default function Chef() {
     enabled: !Number.isNaN(chefId),
   });
 
-  useEffect(() => {
+  const [prevChefId, setPrevChefId] = useState(chefId);
+  if (prevChefId !== chefId) {
+    setPrevChefId(chefId);
     setActiveDish(null);
     setPendingAdd(null);
-  }, [chefId]);
+  }
 
   const onChefMismatch = (dish: DishDto, quantity: number) => {
     setActiveDish(null);

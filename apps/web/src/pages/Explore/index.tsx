@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { foodmeApi } from "@/api/foodme";
@@ -16,10 +16,13 @@ export default function Explore() {
   const [query, setQuery] = useState(searchParams.get("q") ?? "");
   const [kitchenFilter, setKitchenFilter] = useState<string | null>(null);
 
-  useEffect(() => {
-    setQuery(searchParams.get("q") ?? "");
+  const urlQuery = searchParams.get("q") ?? "";
+  const [prevUrlQuery, setPrevUrlQuery] = useState(urlQuery);
+  if (prevUrlQuery !== urlQuery) {
+    setPrevUrlQuery(urlQuery);
+    setQuery(urlQuery);
     setPage(0);
-  }, [searchParams]);
+  }
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["chefs", "active", page],

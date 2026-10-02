@@ -1,6 +1,6 @@
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { AuthPanel } from "@/components/sections/auth-panel";
-import { useAuth } from "@/providers/auth-provider";
+import { useAuth } from "@/providers/auth-context";
 import { safeAuthNext } from "@/lib/auth-next";
 
 export default function Register() {

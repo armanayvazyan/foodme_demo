@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ApiRequestError } from "@/api/client";
-import { useAuth } from "@/providers/auth-provider";
+import { useAuth } from "@/providers/auth-context";
 import { loginSchema, registerSchema, type LoginFormValues, type RegisterFormValues } from "@/schemas/auth-schema";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

@@ -1,7 +1,7 @@
 import { Link, useSearchParams } from "react-router-dom";
 import { ArrowUpRight, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/providers/auth-provider";
+import { useAuth } from "@/providers/auth-context";
 
 interface OrderStatusProps {
   type: "success" | "failure";
