@@ -4,6 +4,8 @@ name: Mutation Testing
 # Claude runs the `mutation-testing` skill (.agents/skills/mutation-testing) against the backend:
 # it plants one bug at a time, runs the tests, reverts, and writes a report.
 on:
+  pull_request:
+    types: [ opened, synchronize, ready_for_review, reopened ]
   workflow_dispatch:
     inputs:
       target:
