@@ -6,16 +6,20 @@
 #   secret, named exactly CLAUDE_CODE_OAUTH_TOKEN. Without it this workflow
 #   will fail at the claude-code-action step.
 #
-# Note: claude-code-action only runs when this file is identical to the copy
-# on the default branch. A PR that edits this file gets "Workflow validation
-# failed" and skips the review until the change is merged to main.
+# github_token is the workflow's own GITHUB_TOKEN, so comments are posted by
+# github-actions[bot]. Without it the action exchanges an OIDC token for a
+# Claude GitHub App token, and that exchange refuses to run unless this file
+# is identical to the copy on main ("Workflow validation failed"), which
+# blocks testing workflow changes inside a PR.
 #
-# Permissions are scoped to the minimum the action needs to read the PR
-# diff, post review comments, and mint the OIDC token it uses for
-# short-lived credential exchange:
-#   contents: read       — checkout / read the repo at the PR ref
+# In agent mode (a `prompt` is set) the action posts nothing by itself: Claude
+# has to call `gh pr comment` / the inline comment tool, so the prompt says so
+# and those tools are in --allowedTools.
+#
+# Permissions are scoped to the minimum the action needs:
+#   contents: read        — checkout / read the repo at the PR ref
 #   pull-requests: write  — post review comments on the PR
-#   id-token: write        — OIDC token for the action's auth flow
+#   id-token: write       — OIDC token for the action's auth flow
 name: Claude PR Review
 
 on:
@@ -39,10 +43,22 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+
             Review this pull request for correctness, security issues, and
-            adherence to the FoodMe repo conventions. Summarize findings and
-            call out anything that looks like a real bug or security risk.
+            adherence to the FoodMe repo conventions (CLAUDE.md and
+            .agents/rules/*.md). Read the diff with `gh pr diff`.
+
+            - For a problem on a specific line, leave an inline comment with
+              mcp__github_inline_comment__create_inline_comment.
+            - Then post ONE summary comment with
+              `gh pr comment ${{ github.event.pull_request.number }} --body "..."`:
+              overall verdict, then findings ranked by severity. Call out
+              anything that looks like a real bug or security risk.
+
+            You MUST post the summary comment, even if you find nothing.
           include_fix_links: true
-          show_full_output: true
-          claude_args: '--allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"'
+          claude_args: '--allowedTools "Read,Glob,Grep,mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(git diff:*),Bash(git log:*),Bash(git show:*)"'
