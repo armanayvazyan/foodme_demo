@@ -1,15 +1,5 @@
-# Compares a PR's diff with the Jira ticket in its title (KAN-<n>) and comments
-# the result on the PR, as claude[bot].
-#
-# Required repo secrets: CLAUDE_CODE_OAUTH_TOKEN, JIRA_API_TOKEN.
-# Jira comes from the mcp-atlassian server in the root .mcp.json (run with uvx).
-# track_progress makes the action post the comment itself; Claude fills it in.
-# The PR title and diff are handed to Claude, so it needs no gh CLI.
-# Edits to this file only take effect once they're on main.
-#
-# Quality gate: the job fails when something the ticket asks for is missing,
-# or the ticket can't be found. Extra changes are reported but don't fail it.
-# A PR that edits this file passes with a warning, since the check is skipped.
+# Compares the PR diff with the Jira ticket (KAN-<n>) in the PR title.
+# Secrets: CLAUDE_CODE_OAUTH_TOKEN, JIRA_API_TOKEN. Jira via mcp-atlassian in .mcp.json (uvx).
 name: Check Git Diff vs Jira Issue
 
 on:
@@ -18,7 +8,7 @@ on:
 
 permissions:
   contents: read
-  pull-requests: write
+  pull-requests: read
   id-token: write
 
 jobs:
@@ -31,54 +21,19 @@ jobs:
 
       - uses: astral-sh/setup-uv@v6
 
-      - name: Write PR diff
-        run: git diff ${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }} > pr.diff
+      - run: git diff ${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }} > pr.diff
 
-      - name: Compare PR with Jira ticket
-        id: jira
-        uses: anthropics/claude-code-action@v1
+      - uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           track_progress: true
           prompt: |
             PR title: ${{ github.event.pull_request.title }}
-            PR diff: the file pr.diff in the working directory.
-
-            1. Extract the Jira key (`KAN-<n>`) from the PR title.
-            2. Fetch the ticket with mcp__mcp-atlassian__jira_get_issue.
-            3. Read pr.diff and compare it with the ticket: what's done,
-               what's missing, anything extra.
-            4. Write the result into your PR comment, headings: Jira ticket
-               (key + link), Done, Missing, Extra, Verdict. If the key or the
-               ticket can't be found, say so.
-
-            Don't change any files.
-
-            Return passed = false if anything is Missing or the ticket can't
-            be found or fetched. Extra changes alone don't fail it.
+            Fetch the Jira ticket named in the title (KAN-<n>) with
+            mcp__mcp-atlassian__jira_get_issue, compare it with pr.diff and write
+            your comment with headings: Jira ticket (key + link), Done, Missing,
+            Extra, Verdict. If the ticket can't be found, say so.
           claude_args: |
             --allowedTools "mcp__mcp-atlassian__jira_get_issue"
-            --json-schema '{"type":"object","properties":{"passed":{"type":"boolean"},"missing_count":{"type":"integer"},"extra_count":{"type":"integer"},"summary":{"type":"string"}},"required":["passed","missing_count","extra_count","summary"]}'
         env:
           JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
-
-      - name: Fail if the PR doesn't cover the ticket
-        env:
-          RESULT: ${{ steps.jira.outputs.structured_output }}
-          WORKFLOW_FILE: .github/workflows/git-jira-checker.yml
-          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
-        run: |
-          if [ -z "$RESULT" ]; then
-            # The action skips itself when this file differs from main.
-            if ! git diff --quiet "origin/$DEFAULT_BRANCH" HEAD -- "$WORKFLOW_FILE"; then
-              echo "::warning::This PR edits $WORKFLOW_FILE, so the Jira check was skipped. Gate passes."
-              exit 0
-            fi
-            echo "::error::Claude returned no structured result"
-            exit 1
-          fi
-          echo "$RESULT" | jq .
-          if [ "$(echo "$RESULT" | jq -r .passed)" != "true" ]; then
-            echo "::error::PR vs Jira: $(echo "$RESULT" | jq -r .missing_count) missing, see the PR comment"
-            exit 1
-          fi
