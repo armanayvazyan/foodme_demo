@@ -57,6 +57,7 @@ Architecture and conventions live in path-scoped rules under `.agents/rules/` (`
 | `admin-architecture.md` | `apps/admin/**` | back office hierarchy, data flow, dataProvider |
 | `admin.md` | `apps/admin/**` | back office conventions |
 | `jira.md` | always | Jira: load the `jira` skill, current sprint, bug priority |
+| `git.md` | always | branch and commit naming, protected `main`, PR merge gates |
 
 ## Intentional demo behaviour (don't "fix")
 
@@ -77,4 +78,4 @@ On Render's free tier, services cannot *receive* private-network traffic, so eve
 
 ## Known stale references
 
-`.github/workflows/ci.yml` (the `e2e` job) and `.env.example` still refer to `infra/docker-compose.yml`, and `.env.example` also refers to `docs/`. Both were removed from the repo, so that CI job fails. The backend, web, admin and docker CI jobs are unaffected.
+`.env.example` still refers to `infra/docker-compose.yml` and `docs/`, which were removed from the repo. The CI `e2e` job also needs `infra/docker-compose.yml`, so it only runs when the repo variable `RUN_E2E` is `true`.
