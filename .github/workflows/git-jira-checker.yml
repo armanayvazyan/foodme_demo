@@ -1,6 +1,7 @@
 name: Check Git Diff vs Jira Issue
 
 on:
+  workflow_dispatch:
   pull_request:
     types: [opened, synchronize, reopened]
 
