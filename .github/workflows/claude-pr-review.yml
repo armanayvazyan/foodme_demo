@@ -15,8 +15,9 @@
 # has to call `gh pr comment` / the inline comment tool, so the prompt says so
 # and those tools are in --allowedTools.
 #
-# The job fails when Claude reports findings: --json-schema makes it return
-# {issues_found, issue_count, summary}, and the last step checks it.
+# Quality gate: the job fails when Claude reports findings. --json-schema makes
+# it return {issues_found, issue_count, summary}, and the last step checks it.
+# A PR that edits this file passes with a warning, since the review is skipped.
 #
 # Permissions are scoped to the minimum the action needs:
 #   contents: read        — checkout / read the repo at the PR ref
@@ -74,8 +75,15 @@ jobs:
       - name: Fail if the review found issues
         env:
           RESULT: ${{ steps.review.outputs.structured_output }}
+          WORKFLOW_FILE: .github/workflows/claude-pr-review.yml
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
         run: |
           if [ -z "$RESULT" ]; then
+            # The action skips itself when this file differs from main.
+            if ! git diff --quiet "origin/$DEFAULT_BRANCH" HEAD -- "$WORKFLOW_FILE"; then
+              echo "::warning::This PR edits $WORKFLOW_FILE, so the review was skipped. Gate passes."
+              exit 0
+            fi
             echo "::error::Claude returned no structured result"
             exit 1
           fi
