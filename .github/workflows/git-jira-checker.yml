@@ -1,25 +1,12 @@
-# Compares a PR's diff with the Jira ticket named in its title (KAN-<n>) and
-# comments the result on the PR.
+# Compares a PR's diff with the Jira ticket in its title (KAN-<n>) and comments
+# the result on the PR, as claude[bot].
 #
 # Required repo secrets: CLAUDE_CODE_OAUTH_TOKEN, JIRA_API_TOKEN.
-#
-# Jira is reached through the mcp-atlassian MCP server from the root
-# .mcp.json (run with uvx, hence setup-uv). The other servers there can't
-# start in CI; that's harmless.
-# Comments are posted as claude[bot]; see the note in claude-pr-review.yml
-# about edits to this file only taking effect once they're on main.
-#
-# The job fails when the ticket isn't fully covered: --json-schema makes Claude
-# return {issues_found, missing_count, extra_count, summary}, and the last step
-# checks it.
+# Jira comes from the mcp-atlassian server in the root .mcp.json (run with uvx).
+# Edits to this file only take effect once they're on main.
 name: Check Git Diff vs Jira Issue
 
 on:
-  workflow_dispatch:
-    inputs:
-      pr_number:
-        description: PR number to check
-        required: true
   pull_request:
     types: [opened, synchronize, reopened]
 
@@ -31,37 +18,26 @@ permissions:
 jobs:
   claude-jira-implementation-review:
     runs-on: ubuntu-latest
-    env:
-      PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr_number }}
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: Set up uv (runs mcp-atlassian via uvx)
-        uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v6
 
-      - name: Run Claude Code vs Jira Implementation Review
-        id: jira
+      - name: Compare PR with Jira ticket
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt: |
-            1. Get the PR title and Extract the Jira key (format `KAN-<n>`) from the title
-            2. Get the PR diff
-            3. Fetch the ticket with jira_get_issue tool.
-            4. Compare the diff with the ticket's description and acceptance
-               criteria: what's done, what's missing, anything extra (changes
-               the ticket doesn't ask for).
-            5. Post the result as ONE comment into PR
-               headings: Jira ticket (key + link), Done, Missing, Extra, Verdict.
+            PR NUMBER: ${{ github.event.pull_request.number }}
 
-            You MUST post the comment. If no Jira key is found or the ticket
-            can't be fetched, post a comment that says so and why.
-
-            Return issues_found = true if anything is Missing or Extra, or if
-            the ticket couldn't be found or fetched.
+            1. Get the PR title with `gh pr view` and extract the Jira key (`KAN-<n>`).
+            2. Fetch the ticket with mcp__mcp-atlassian__jira_get_issue.
+            3. Get the PR diff with `gh pr diff`.
+            4. Compare them: what's done, what's missing, anything extra.
+            5. Post ONE comment with `gh pr comment`, headings: Jira ticket
+               (key + link), Done, Missing, Extra, Verdict. If the key or the
+               ticket can't be found, post a comment saying so.
           claude_args: |
-            --allowedTools "mcp__mcp-atlassian__jira_get_issue,mcp__github_inline_comment__create_inline_comment"
+            --allowedTools "mcp__mcp-atlassian__jira_get_issue,Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr comment:*)"
         env:
           JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
