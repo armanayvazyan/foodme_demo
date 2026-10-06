@@ -26,6 +26,7 @@ jobs:
           CLAUDE_CODE_DISABLE_BACKGROUND_TASKS: "1"
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          show_full_output: true
           prompt: |
             Take title of PR. From title get the jira issue number which has following format: `KAN-XXXX`
             Take the branch diff against main. Fetch Jira ticket with the jira_get_issue tool and compare: 
