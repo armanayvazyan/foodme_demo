@@ -54,7 +54,6 @@ jobs:
           prompt: |
             /mutation-testing ${{ inputs.target }} ${{ inputs.count }}
 
-            You are running in CI with nobody watching. Do not ask questions and do not offer to write tests.
             Do not commit or push. Finish with the report written to apps/backend/build/mutation-testing/report.md.
           claude_args: '--allowedTools "Read,Edit,Write,Glob,Grep,Bash"'
           show_full_output: true
