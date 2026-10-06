@@ -3,8 +3,9 @@
 #
 # Required repo secrets: CLAUDE_CODE_OAUTH_TOKEN, JIRA_API_TOKEN.
 #
-# Jira is reached through the mcp-atlassian MCP server, configured inline
-# below (the project .mcp.json also lists servers that can't start in CI).
+# Jira is reached through the mcp-atlassian MCP server from the root
+# .mcp.json (run with uvx, hence setup-uv). The other servers there can't
+# start in CI; that's harmless.
 # Comments are posted as claude[bot]; see the note in claude-pr-review.yml
 # about edits to this file only taking effect once they're on main.
 #
@@ -40,24 +41,6 @@ jobs:
       - name: Set up uv (runs mcp-atlassian via uvx)
         uses: astral-sh/setup-uv@v6
 
-      - name: Write Jira MCP config
-        run: |
-          cat > "$RUNNER_TEMP/jira-mcp.json" <<'EOF'
-          {
-            "mcpServers": {
-              "mcp-atlassian": {
-                "command": "uvx",
-                "args": ["mcp-atlassian"],
-                "env": {
-                  "JIRA_URL": "https://foodme-armanayvazyan.atlassian.net",
-                  "JIRA_USERNAME": "ayvazyan.a.arman@gmail.com",
-                  "JIRA_API_TOKEN": "${JIRA_API_TOKEN}"
-                }
-              }
-            }
-          }
-          EOF
-
       - name: Run Claude Code vs Jira Implementation Review
         id: jira
         uses: anthropics/claude-code-action@v1
@@ -85,7 +68,6 @@ jobs:
             Return issues_found = true if anything is Missing or Extra, or if
             the ticket couldn't be found or fetched.
           claude_args: |
-            --mcp-config ${{ runner.temp }}/jira-mcp.json
             --allowedTools "Read,Glob,Grep,mcp__mcp-atlassian__jira_get_issue,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(git diff:*),Bash(git log:*)"
             --json-schema '{"type":"object","properties":{"issues_found":{"type":"boolean"},"missing_count":{"type":"integer"},"extra_count":{"type":"integer"},"summary":{"type":"string"}},"required":["issues_found","missing_count","extra_count","summary"]}'
         env:
