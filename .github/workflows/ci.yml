@@ -1,8 +1,9 @@
 name: CI
 
+# Disabled: runs only when triggered manually (Actions > CI > Run workflow).
+# To re-enable, restore the `push:` and `pull_request:` triggers.
 on:
-  push:
-  pull_request:
+  workflow_dispatch:
 
 jobs:
   backend:
