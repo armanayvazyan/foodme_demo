@@ -1,21 +1,3 @@
-# Automated PR review by Claude Code, for the agentic-QA course demo.
-#
-# Required repo secret:
-#   CLAUDE_CODE_OAUTH_TOKEN — generated locally with `claude setup-token`.
-#   Add it under Settings > Secrets and variables > Actions > New repository
-#   secret, named exactly CLAUDE_CODE_OAUTH_TOKEN. Without it this workflow
-#   will fail at the claude-code-action step.
-#
-# Note: claude-code-action only runs when this file is identical to the copy
-# on the default branch. A PR that edits this file gets "Workflow validation
-# failed" and skips the review until the change is merged to main.
-#
-# Permissions are scoped to the minimum the action needs to read the PR
-# diff, post review comments, and mint the OIDC token it uses for
-# short-lived credential exchange:
-#   contents: read       — checkout / read the repo at the PR ref
-#   pull-requests: write  — post review comments on the PR
-#   id-token: write        — OIDC token for the action's auth flow
 name: Claude PR Review
 
 on:
@@ -24,7 +6,7 @@ on:
 
 permissions:
   contents: read
-  pull-requests: write
+  pull-requests: read
   id-token: write
 
 jobs:
@@ -32,17 +14,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: Run Claude Code Review
-        uses: anthropics/claude-code-action@v1
+      - uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt: |
-            Review this pull request for correctness, security issues, and
-            adherence to the FoodMe repo conventions. Summarize findings and
-            call out anything that looks like a real bug or security risk.
-          include_fix_links: true
-          show_full_output: true
-          claude_args: '--allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"'
+            Review PR #${{ github.event.pull_request.number }} for bugs, security
+            issues and violations of CLAUDE.md and .agents/rules/*.md.
+            Read the diff with `gh pr diff`. Post ONE comment with
+            `gh pr comment ${{ github.event.pull_request.number }} --body "..."`:
+            verdict, then findings ranked by severity.
+          claude_args: |
+            --allowedTools "Bash(gh pr diff:*),Bash(gh pr comment:*)"
