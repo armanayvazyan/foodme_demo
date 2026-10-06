@@ -6,15 +6,17 @@
 #   secret, named exactly CLAUDE_CODE_OAUTH_TOKEN. Without it this workflow
 #   will fail at the claude-code-action step.
 #
-# github_token is the workflow's own GITHUB_TOKEN, so comments are posted by
-# github-actions[bot]. Without it the action exchanges an OIDC token for a
-# Claude GitHub App token, and that exchange refuses to run unless this file
-# is identical to the copy on main ("Workflow validation failed"), which
-# blocks testing workflow changes inside a PR.
+# Comments are posted as claude[bot]: the action exchanges an OIDC token for a
+# Claude GitHub App token. That exchange only works when this file is
+# identical to the copy on main, so a PR that edits this file gets "Workflow
+# validation failed" and skips the review until the change is merged.
 #
 # In agent mode (a `prompt` is set) the action posts nothing by itself: Claude
 # has to call `gh pr comment` / the inline comment tool, so the prompt says so
 # and those tools are in --allowedTools.
+#
+# The job fails when Claude reports findings: --json-schema makes it return
+# {issues_found, issue_count, summary}, and the last step checks it.
 #
 # Permissions are scoped to the minimum the action needs:
 #   contents: read        — checkout / read the repo at the PR ref
@@ -40,10 +42,10 @@ jobs:
           fetch-depth: 0
 
       - name: Run Claude Code Review
+        id: review
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
           prompt: |
             REPO: ${{ github.repository }}
             PR NUMBER: ${{ github.event.pull_request.number }}
@@ -60,5 +62,25 @@ jobs:
               anything that looks like a real bug or security risk.
 
             You MUST post the summary comment, even if you find nothing.
+
+            Return issues_found = true if you posted any finding that should
+            be fixed before merge (bug, security risk, convention violation).
+            Pure style nits or questions don't count.
           include_fix_links: true
-          claude_args: '--allowedTools "Read,Glob,Grep,mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(git diff:*),Bash(git log:*),Bash(git show:*)"'
+          claude_args: |
+            --allowedTools "Read,Glob,Grep,mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(git diff:*),Bash(git log:*),Bash(git show:*)"
+            --json-schema '{"type":"object","properties":{"issues_found":{"type":"boolean"},"issue_count":{"type":"integer"},"summary":{"type":"string"}},"required":["issues_found","issue_count","summary"]}'
+
+      - name: Fail if the review found issues
+        env:
+          RESULT: ${{ steps.review.outputs.structured_output }}
+        run: |
+          if [ -z "$RESULT" ]; then
+            echo "::error::Claude returned no structured result"
+            exit 1
+          fi
+          echo "$RESULT" | jq .
+          if [ "$(echo "$RESULT" | jq -r .issues_found)" = "true" ]; then
+            echo "::error::Claude review found $(echo "$RESULT" | jq -r .issue_count) issue(s), see the PR comments"
+            exit 1
+          fi

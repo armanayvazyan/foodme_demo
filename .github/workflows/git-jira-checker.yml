@@ -5,7 +5,12 @@
 #
 # Jira is reached through the mcp-atlassian MCP server, configured inline
 # below (the project .mcp.json also lists servers that can't start in CI).
-# github_token: see the note in claude-pr-review.yml.
+# Comments are posted as claude[bot]; see the note in claude-pr-review.yml
+# about edits to this file only taking effect once they're on main.
+#
+# The job fails when the ticket isn't fully covered: --json-schema makes Claude
+# return {issues_found, missing_count, extra_count, summary}, and the last step
+# checks it.
 name: Check Git Diff vs Jira Issue
 
 on:
@@ -54,10 +59,10 @@ jobs:
           EOF
 
       - name: Run Claude Code vs Jira Implementation Review
+        id: jira
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
           prompt: |
             REPO: ${{ github.repository }}
             PR NUMBER: ${{ env.PR_NUMBER }}
@@ -76,6 +81,26 @@ jobs:
 
             You MUST post the comment. If no Jira key is found or the ticket
             can't be fetched, post a comment that says so and why.
-          claude_args: '--mcp-config ${{ runner.temp }}/jira-mcp.json --allowedTools "Read,Glob,Grep,mcp__mcp-atlassian__jira_get_issue,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(git diff:*),Bash(git log:*)"'
+
+            Return issues_found = true if anything is Missing or Extra, or if
+            the ticket couldn't be found or fetched.
+          claude_args: |
+            --mcp-config ${{ runner.temp }}/jira-mcp.json
+            --allowedTools "Read,Glob,Grep,mcp__mcp-atlassian__jira_get_issue,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(git diff:*),Bash(git log:*)"
+            --json-schema '{"type":"object","properties":{"issues_found":{"type":"boolean"},"missing_count":{"type":"integer"},"extra_count":{"type":"integer"},"summary":{"type":"string"}},"required":["issues_found","missing_count","extra_count","summary"]}'
         env:
           JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+
+      - name: Fail if the PR doesn't match the ticket
+        env:
+          RESULT: ${{ steps.jira.outputs.structured_output }}
+        run: |
+          if [ -z "$RESULT" ]; then
+            echo "::error::Claude returned no structured result"
+            exit 1
+          fi
+          echo "$RESULT" | jq .
+          if [ "$(echo "$RESULT" | jq -r .issues_found)" = "true" ]; then
+            echo "::error::PR vs Jira: $(echo "$RESULT" | jq -r .missing_count) missing, $(echo "$RESULT" | jq -r .extra_count) extra, see the PR comment"
+            exit 1
+          fi
