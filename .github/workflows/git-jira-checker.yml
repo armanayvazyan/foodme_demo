@@ -26,5 +26,6 @@ jobs:
             Take title of PR. From title get the jira issue number which has following format: `KAN-XXXX`
             Take the branch diff against main. Fetch Jira ticket with the jira_get_issue tool and compare: 
             what's done, what's missing, anything extra?
+            add into PR comment the results
           include_fix_links: true
           claude_args: '--allowedTools "mcp__mcp-atlassian__jira_get_issue"'
