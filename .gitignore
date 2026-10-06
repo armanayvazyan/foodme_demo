@@ -34,9 +34,6 @@ blob-report/
 .env
 .env.*
 !.env.example
-.mcp.json
-!.mcp.json.example
-
 # --- IDE ------------------------------------------------------------------
 .idea/
 .vscode/
@@ -64,3 +61,8 @@ infra/docker-compose.local.yml
 # --- Agent tooling (.claude -> .agents) ----------------------------------
 .agents/settings.local.json
 .agents/worktrees/
+
+# AgentSecrets environment files
+.env.development
+.env.staging
+.env.production
