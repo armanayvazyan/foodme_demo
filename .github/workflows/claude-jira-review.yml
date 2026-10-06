@@ -27,6 +27,7 @@ jobs:
         uses: anthropics/claude-code-action@v1
         env:
           CLAUDE_CODE_DISABLE_BACKGROUND_TASKS: "1"
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           show_full_output: true
