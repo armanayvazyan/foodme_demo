@@ -23,7 +23,7 @@ jobs:
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt: |
-            Take title of PR. From title get the jira issue number which has following format: `KAN-XXXX`
+            Take jira issue number KAN-4
             Take the branch diff against main. Fetch Jira ticket with the jira_get_issue tool and compare: 
             what's done, what's missing, anything extra?
           include_fix_links: true
