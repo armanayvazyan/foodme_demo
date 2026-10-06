@@ -3,6 +3,8 @@
 #
 # Required repo secrets: CLAUDE_CODE_OAUTH_TOKEN, JIRA_API_TOKEN.
 # Jira comes from the mcp-atlassian server in the root .mcp.json (run with uvx).
+# track_progress makes the action post the comment itself; Claude fills it in.
+# The PR title and diff are handed to Claude, so it needs no gh CLI.
 # Edits to this file only take effect once they're on main.
 name: Check Git Diff vs Jira Issue
 
@@ -20,24 +22,33 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: astral-sh/setup-uv@v6
+
+      - name: Write PR diff
+        run: git diff ${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }} > pr.diff
 
       - name: Compare PR with Jira ticket
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          track_progress: true
           prompt: |
-            PR NUMBER: ${{ github.event.pull_request.number }}
+            PR title: ${{ github.event.pull_request.title }}
+            PR diff: the file pr.diff in the working directory.
 
-            1. Get the PR title with `gh pr view` and extract the Jira key (`KAN-<n>`).
+            1. Extract the Jira key (`KAN-<n>`) from the PR title.
             2. Fetch the ticket with mcp__mcp-atlassian__jira_get_issue.
-            3. Get the PR diff with `gh pr diff`.
-            4. Compare them: what's done, what's missing, anything extra.
-            5. Post ONE comment with `gh pr comment`, headings: Jira ticket
+            3. Read pr.diff and compare it with the ticket: what's done,
+               what's missing, anything extra.
+            4. Write the result into your PR comment, headings: Jira ticket
                (key + link), Done, Missing, Extra, Verdict. If the key or the
-               ticket can't be found, post a comment saying so.
+               ticket can't be found, say so.
+
+            Don't change any files.
           claude_args: |
-            --allowedTools "mcp__mcp-atlassian__jira_get_issue,Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr comment:*)"
+            --allowedTools "mcp__mcp-atlassian__jira_get_issue"
         env:
           JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
