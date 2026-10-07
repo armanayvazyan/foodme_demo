@@ -91,27 +91,18 @@ For each gap, name the concrete case and the **correct** expected result, like "
 
 ## 5. Report
 
-CI: post each **bad test** as an inline comment on its line with `mcp__github_inline_comment__create_inline_comment` (`confirmed: true`): the problem and the fix. **Missing tests** are not inline; they go only in the summary. Then post **one** summary PR comment with `gh pr comment <n> --body-file <file>`. Local: print the summary.
+Every report uses one of the templates in `templates/`. Copy the template and replace each `{{...}}` placeholder. Don't add, rename or reorder sections.
 
-The summary is exactly this shape:
+| Situation | Template |
+|---|---|
+| At least one bad test or missing test, any severity | `templates/report-issues.md` |
+| No bad tests and no missing tests, or no files under `apps/` changed | `templates/report-passed.md`, copied **verbatim** |
 
-```markdown
-## 🧪 Test review
+- `report-passed.md` is static. The quality gate looks for its exact line `✅ Everything passed`. Never write that line in any other report, and never use the passed template when you found even one Low finding.
+- In `report-issues.md`: one table row per finding, numbered `B1, B2…` and `M1, M2…`, sorted High → Low. If a table has no rows, replace the table with `None.` Delete the `### Notes` section if you have no notes. Notes never affect the result.
 
-**Verdict:** <one sentence: are the tests good enough to merge?>
+**CI** (the prompt gives a PR number and a report path):
+1. For each bad test, post an inline comment on its line with `mcp__github_inline_comment__create_inline_comment` (`confirmed: true`), using `templates/inline-comment.md`. Keep the first line `<!-- claude-test-review -->`: the workflow uses it to delete old inline comments when it re-runs. Missing tests are never inline.
+2. Write the filled report to the report path with `Write`. **Don't** post it yourself. The workflow posts it and replaces the previous report comment on the PR.
 
-### Bad tests (<count>)
-| Sev | Test | Problem | Fix |
-|---|---|---|---|
-| Medium | `OrderControllerTest.java:58` `createOrder_validCash_created` | Only asserts 201; never checks the order total | Assert `$.totalPrice` for the dishes sent |
-
-### Missing tests (<count>)
-| Sev | Production code | Untested case | Where to add it |
-|---|---|---|---|
-| High | `OrderService.java:41` | Cancelling another customer's order → 403 | `OrderControllerTest` |
-
-### Notes
-- <migration caveats, things you couldn't check; omit the section if empty>
-```
-
-If a section has nothing, write `None.` under its heading. If the PR touches no files under `apps/`, post only `## 🧪 Test review` with `No app code changed.`
+**Local:** print the filled report.
