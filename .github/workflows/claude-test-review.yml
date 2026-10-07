@@ -1,0 +1,34 @@
+name: Claude Test Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review, reopened]
+jobs:
+  claude-test-review:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+      issues: read
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Run Claude Test Review
+        id: claude-test-review
+        uses: anthropics/claude-code-action@v1
+        env:
+          CLAUDE_CODE_DISABLE_BACKGROUND_TASKS: "1"
+        with:
+          show_full_output: true
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: |
+            here is PR ${{ github.repository }}/pull/${{ github.event.pull_request.number }}
+            it need to be reviewed by skill test-review
+            after reviewing add inline comments on tests which need to be modified, and add PR comment on tests which need to be added
+          claude_args: '--allowedTools "Skill,Read,Glob,Grep,Write,mcp__github_inline_comment__create_inline_comment,Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr comment:*)"'
+
