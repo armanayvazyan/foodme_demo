@@ -18,6 +18,9 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+
       - name: Run Claude Code Jira Review
         id: claude-jira-review
         uses: anthropics/claude-code-action@v1
