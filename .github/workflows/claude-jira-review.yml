@@ -37,4 +37,4 @@ jobs:
             then get code changes made on this PR. Review them compared to Jira implementation ticket.
             Write me a summary of what is missing it implement and what code was added that is not relates to Jira ticket and put a comment in PR.
             use jira-report-template.md as a comment template
-          claude_args: '--allowedTools "mcp__mcp-atlassian__jira_get_issue,Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr comment:*)"'
+          claude_args: '--allowedTools "mcp__mcp-atlassian__jira_get_issue,Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr comment:*),Read,Grep,Glob,Write"'
