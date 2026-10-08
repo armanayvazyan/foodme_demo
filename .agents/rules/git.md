@@ -23,10 +23,8 @@
 - Push the branch and open a PR into `main` only when the user asks for one.
 - Title: same format as a commit summary. Body: what changed, the Jira link, and how it was tested.
 - Merge rules (enforced by branch protection on `main`):
-  - Required status checks must pass: `Backend Build`, `Web Build`, `Admin Build`, `Docker Build`.
   - The branch must be up to date with `main` before merging.
   - All review conversations must be resolved.
-- `Claude PR Review` posts an automated review on every PR. It needs the `CLAUDE_CODE_OAUTH_TOKEN` repo secret (generate it with `claude setup-token`). Treat its findings like a human reviewer's: fix them or reply with a reason.
 - Prefer squash merge. Delete the branch after merging.
 
 ## Before you push
