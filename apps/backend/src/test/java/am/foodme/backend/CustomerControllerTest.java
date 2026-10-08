@@ -9,6 +9,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
 
 import java.util.List;
 import java.util.Map;
@@ -137,6 +138,92 @@ class CustomerControllerTest {
         mockMvc.perform(post("/api/customer/orders/FM-100001/review")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(reviewPayload(5, "Anonymous")))
+                .andExpect(status().isUnauthorized());
+    }
+
+    // Promo codes. Test chef 1: delivery 700 AMD, free delivery above 8,000 AMD.
+
+    private String promoPayload(String code, double subtotal) throws Exception {
+        return objectMapper.writeValueAsString(Map.of(
+                "code", code,
+                "chefId", 1,
+                "subtotal", subtotal,
+                "deliveryMethod", "DELIVERY"
+        ));
+    }
+
+    private ResultActions applyPromo(String token, String code, double subtotal) throws Exception {
+        return mockMvc.perform(post("/api/customer/promo/apply")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(promoPayload(code, subtotal)));
+    }
+
+    @Test
+    void applyPromo_validCode_discountsOrderTotalIncludingDelivery() throws Exception {
+        // 4,200 subtotal + 700 delivery = 4,900; 10% = 490
+        applyPromo(customerToken(), "SAVE10", 4200)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value("SAVE10"))
+                .andExpect(jsonPath("$.status").value("APPLIED"))
+                .andExpect(jsonPath("$.percent").value(10))
+                .andExpect(jsonPath("$.deliveryPrice").value(700.0))
+                .andExpect(jsonPath("$.discount").value(490.0))
+                .andExpect(jsonPath("$.total").value(4410.0));
+    }
+
+    @Test
+    void applyPromo_lowerCaseCode_applied() throws Exception {
+        applyPromo(customerToken(), " save10 ", 4200)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value("SAVE10"))
+                .andExpect(jsonPath("$.status").value("APPLIED"));
+    }
+
+    @Test
+    void applyPromo_belowMinimum_reportsMissingAmount() throws Exception {
+        applyPromo(customerToken(), "TREAT15", 4200)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("BELOW_MINIMUM"))
+                .andExpect(jsonPath("$.missingAmount").value(3800.0))
+                .andExpect(jsonPath("$.discount").value(0.0))
+                .andExpect(jsonPath("$.total").value(4900.0));
+    }
+
+    @Test
+    void applyPromo_expiredCode_notApplied() throws Exception {
+        applyPromo(customerToken(), "OLD15", 4200)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("EXPIRED"))
+                .andExpect(jsonPath("$.discount").value(0.0));
+    }
+
+    @Test
+    void applyPromo_unknownCode_notFound() throws Exception {
+        applyPromo(customerToken(), "NOPE", 4200)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("NOT_FOUND"))
+                .andExpect(jsonPath("$.discount").value(0.0));
+    }
+
+    @Test
+    void applyPromo_secondCode_replacesFirst() throws Exception {
+        // 8,400 is above the free-delivery threshold, so the total is the subtotal; 15% = 1,260
+        String token = customerToken();
+        applyPromo(token, "SAVE10", 8400).andExpect(status().isOk());
+        applyPromo(token, "TREAT15", 8400)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value("TREAT15"))
+                .andExpect(jsonPath("$.deliveryPrice").value(0.0))
+                .andExpect(jsonPath("$.discount").value(1260.0))
+                .andExpect(jsonPath("$.total").value(7140.0));
+    }
+
+    @Test
+    void applyPromo_withoutToken_unauthorized() throws Exception {
+        mockMvc.perform(post("/api/customer/promo/apply")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(promoPayload("SAVE10", 4200)))
                 .andExpect(status().isUnauthorized());
     }
 }

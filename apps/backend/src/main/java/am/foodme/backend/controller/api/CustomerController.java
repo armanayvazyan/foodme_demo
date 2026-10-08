@@ -4,6 +4,8 @@ import am.foodme.backend.dto.CustomerProfileDto;
 import am.foodme.backend.dto.OrderDto;
 import am.foodme.backend.dto.OrderListResponseDto;
 import am.foodme.backend.dto.OrderReviewRequestDto;
+import am.foodme.backend.dto.PromoApplyRequestDto;
+import am.foodme.backend.dto.PromoApplyResponseDto;
 import am.foodme.backend.service.CustomerAuthService;
 import am.foodme.backend.service.OrderReviewService;
 import am.foodme.backend.service.OrderService;
@@ -50,5 +52,10 @@ public class CustomerController {
                                 @Valid @RequestBody OrderReviewRequestDto request,
                                 Authentication authentication) {
         return orderReviewService.reviewOrder(number, request, authentication.getName());
+    }
+
+    @PostMapping("/promo/apply")
+    public PromoApplyResponseDto applyPromo(@RequestBody PromoApplyRequestDto request, Authentication authentication) {
+        return orderService.applyPromo(request, authentication.getName());
     }
 }
