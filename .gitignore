@@ -66,3 +66,6 @@ infra/docker-compose.local.yml
 .env.development
 .env.staging
 .env.production
+
+# --- Mutation testing (local runs) ---------------------------------------
+.mutation/

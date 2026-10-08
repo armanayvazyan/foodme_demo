@@ -9,5 +9,11 @@ export default defineConfig(({ mode }) => ({
   plugins: [react()],
   resolve: {
     extensions: ['.js', '.jsx']
-  }
+  },
+  // Unit tests only. Playwright specs live in e2e/ and run with `npm run test:e2e`.
+  test: {
+    include: ['src/**/*.test.{js,jsx}'],
+    environment: 'node',
+    passWithNoTests: true,
+  },
 }))
