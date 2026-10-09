@@ -10,6 +10,13 @@
         "QASE_API_TOKEN": "${QASE_API_TOKEN}"
       }
     },
+    "playwright": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@playwright/mcp@latest"
+      ]
+    },
     "agentsecrets": {
       "command": "agentsecrets",
       "args": [
