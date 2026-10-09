@@ -1,0 +1,9 @@
+{
+  "name": "functional-testing-scripts",
+  "private": true,
+  "type": "module",
+  "description": "Deterministic checks for the functional-testing pipeline",
+  "dependencies": {
+    "yaml": "2.9.1"
+  }
+}
