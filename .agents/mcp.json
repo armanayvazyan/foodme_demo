@@ -42,7 +42,7 @@
         "mcp-glitchtip"
       ],
       "env": {
-        "GLITCHTIP_TOKEN": "${GLITCHTIP_TOKEN}",
+        "GLITCHTIP_TOKEN": "bdec45191ab2b56087f5e15a9c6e1b14478dbeb813ff91c81cf4984a7ce889fd",
         "GLITCHTIP_ORGANIZATION": "foodme",
         "GLITCHTIP_BASE_URL": "https://app.glitchtip.com"
       }

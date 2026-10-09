@@ -23,7 +23,7 @@ The status line at the bottom of Claude Code shows the step the run is on, from 
 STLC KAN-27 │ ✅01 ✅02 ▶03 ⏳04 ⏳05 ⏳06 ⏳07 ⏳08 ⏳10 │ 03 Test cases · case-judge round 1
 ```
 
-It is set up in `.agents/settings.json` (`statusLine` → `statusline.sh`). A personal `statusLine` in your user settings is replaced while you work in this repo.
+It is set up in `.agents/settings.json` (`statusLine` → `statusline.sh`). It shows up only in a session where `/feature-testing-pipeline` was triggered (it checks the session transcript); other sessions get an empty status line. A personal `statusLine` in your user settings is replaced while you work in this repo.
 
 - **Phase 1:** only the skills are linked. You review the cases and the tests yourself.
 - **Phase 2:** the judges are linked too. Steps 03 and 06 call them, save their verdicts and fix FAILs (up to 2 rounds). You then review with the verdict in front of you.
