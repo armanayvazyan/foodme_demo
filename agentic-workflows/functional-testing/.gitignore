@@ -1,8 +1,2 @@
-# Raw logs and error events contain customer PII (phones, emails): never commit them.
-runs/*/raw/
-# Playwright's own JSON output; run-tests.sh keeps the trimmed results.json.
-runs/*/results.raw.json
-# Playwright MCP screenshots and traces from step 05.
-runs/*/browser/
-# Throwaway customer token and MCP config from session.sh.
-runs/*/.auth/
+# Per-ticket run output (spec, plan, gates, results, reports). Not committed for now.
+runs/

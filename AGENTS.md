@@ -79,7 +79,3 @@ On Render's free tier, services cannot *receive* private-network traffic, so eve
 ## Known stale references
 
 `.env.example` still refers to `infra/docker-compose.yml` and `docs/`, which were removed from the repo. The CI `e2e` job also needs `infra/docker-compose.yml`, so it only runs when the repo variable `RUN_E2E` is `true`.
-
-## Functional-testing pipeline
-
-`agentic-workflows/functional-testing/` runs per ticket: start with `/functional-testing <T>`, which shows the next step and command. Skills write, the judge/skeptic/collector agents only read, scripts decide, and humans approve with `scripts/approve.sh` (denied to agents).
