@@ -63,7 +63,7 @@ export const sha256 = (s) => createHash("sha256").update(s).digest("hex").slice(
 
 // Hash of the parts a case judge looks at, so a verdict can be marked stale.
 export function casesHash(spec) {
-  return sha256(JSON.stringify((spec?.test_cases ?? []).map(({ execution, status, spec: s, ...rest }) => rest)));
+  return sha256(JSON.stringify((spec?.test_cases ?? []).map(({ execution, status, spec: s, qase_id, ...rest }) => rest)));
 }
 
 function git(...args) {

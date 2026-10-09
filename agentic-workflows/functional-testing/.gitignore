@@ -4,3 +4,5 @@ runs/*/raw/
 runs/*/results.raw.json
 # Playwright MCP screenshots and traces from step 05.
 runs/*/browser/
+# Throwaway customer token and MCP config from session.sh.
+runs/*/.auth/

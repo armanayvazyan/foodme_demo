@@ -133,7 +133,11 @@ function nextAction(t, s) {
   if (j4.status === "unsure") return human(`decide the UNSURE checks in verdicts/${j4.file}`, "04");
   if (j4.status === "blocked") return human(`case judge failed ${j4.retries} times; fix the cases by hand or approve`, "04");
 
-  if (s["05-execute"].status !== "done") return skill("ft-execute");
+  if (s["05-execute"].status !== "done") {
+    const mcp = `agentic-workflows/functional-testing/runs/${t}/.auth/mcp.json`;
+    if (!existsSync(join(ROOT, mcp))) return { who: "script", cmd: `agentic-workflows/functional-testing/scripts/session.sh ${t}`, what: "sign in a throwaway customer for the browser" };
+    return { who: "agent", cmd: `claude --mcp-config ${mcp} "/ft-execute ${t}"` };
+  }
   if (s["06-automate"].status !== "done") return skill("ft-automate");
 
   const j7 = s["07-test-judge"];
@@ -145,6 +149,7 @@ function nextAction(t, s) {
   if (s["08-run"].status === "pending" || s["08-run"].stale) return { who: "script", cmd: `agentic-workflows/functional-testing/scripts/run-tests.sh ${t}` };
   if (s["09-triage"].status === "pending") return skill("ft-triage");
   if (s["09-triage"].status === "done" && !s["09-triage"].approval) return human("review the bug draft in the triage file; approve to let the agent file it", "09");
+  if (s["09-triage"].approval && !existsSync(join(runDir(t), "filed.md"))) return { who: "agent", cmd: `claude "/ft-triage ${t} file"`, what: "file the approved bug draft" };
   if (s["10-report"].status !== "done") return skill("ft-report");
   if (!s["10-report"].approval) return human("review report.md and approve the Qase push", "10");
   return { who: "agent", cmd: `claude "/ft-report ${t} push"`, what: "push the approved report to Qase (skip if already pushed)" };

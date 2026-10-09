@@ -75,7 +75,8 @@ const meta = { agent, agent_id: input.agent_id, recorded_at: new Date().toISOStr
 
 if (!judge) {
   // Collector: quotes only. Every quote must be word for word in its raw source.
-  if (!Array.isArray(out.quotes) || !out.quotes.length) reject('"quotes" must be a non-empty list');
+  if (!Array.isArray(out.quotes)) reject('"quotes" must be a list');
+  if (!out.quotes.length) process.exit(0); // nothing relevant found: nothing to record
   const bad = checkEvidence(t, out).filter((x) => x.error);
   if (bad.length && !input.stop_hook_active) reject(`these quotes are not word for word in their source: ${bad.map((b) => `${b.id} (${b.error})`).join("; ")}. Copy them exactly, or drop them.`);
   mkdirSync(join(r, "evidence"), { recursive: true });
