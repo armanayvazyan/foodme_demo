@@ -28,7 +28,7 @@
             "args": ["--python", "3.12", "mcp-atlassian"],
             "env": {
                 "JIRA_URL": "https://artashesmkrtchyan09.atlassian.net/",
-                "JIRA_USERNAME": "artashesmkrtchyan09@gmail.com",
+                "JIRA_USERNAME": "artashes.mkrtchyan09@gmail.com",
                 "JIRA_API_TOKEN": "${JIRA_OAUTH_TOKEN}"
             }
         }
