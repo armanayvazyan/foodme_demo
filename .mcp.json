@@ -25,7 +25,7 @@
 
         "mcp-atlassian": {
             "command": "uvx",
-            "args": ["mcp-atlassian"],
+            "args": ["--python", "3.12", "mcp-atlassian"],
             "env": {
                 "JIRA_URL": "https://artashesmkrtchyan09.atlassian.net/",
                 "JIRA_USERNAME": "artashesmkrtchyan09@gmail.com",
