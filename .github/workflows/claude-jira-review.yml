@@ -36,7 +36,7 @@ jobs:
             review Jira issue againts the changes in the PR, after review add a PR comment about how much the implementation relevant to the task described in the jira ticket, what is done and what not
              - PR: ${{ github.repository }}/pull/${{ github.event.pull_request.number }}
              - PR title: ${{ github.event.pull_request.title }}
-             - Get Jira ticket number from the PR title, which has the following format: SCRUM-<number>
+             - Get Jira ticket number from the PR title, which has the following format: <SCRUM-number>
              - Jira tiket: Get jira ticket by using the following tool: mcp__mcp-atlassian__jira_get_issue
-          claude_args: '--allowedTools "Read,Grep,Glob,Bash(git:*),Bash(rg:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr comment:*),mcp__github_inline_comment__create_inline_comment, mcp__mcp-atlassian__jira_get_issue"'
+          claude_args: '--allowedTools "Read,Grep,Glob,Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr comment:*),mcp__github_inline_comment__create_inline_comment, mcp__mcp-atlassian__jira_get_issue"'
           show_full_output: true
