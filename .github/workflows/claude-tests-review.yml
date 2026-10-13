@@ -1,11 +1,11 @@
-name: Tests Review
+name: Claude Tests Review
 
 on:
   pull_request:
     types: [opened, synchronize, ready_for_review, reopened]
 
 jobs:
-  tests-review:
+  claude-tests-review:
 
     runs-on: ubuntu-latest
     permissions:
@@ -20,8 +20,8 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Run Tests Review
-        id: test-review
+      - name: Run Claude Tests Review
+        id: claude-tests-review
         uses: anthropics/claude-code-action@v1
 
         env: 
