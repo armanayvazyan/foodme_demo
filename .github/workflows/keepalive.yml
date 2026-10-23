@@ -1,0 +1,26 @@
+# Keepalive pinger for Render free-tier services (they sleep after ~15 min
+# without traffic).
+#
+# DISABLED by default: only manual runs (Actions -> keepalive -> Run workflow).
+# To enable, uncomment the schedule block below and set these repository
+# variables (Settings -> Secrets and variables -> Actions -> Variables):
+#   BACKEND_URL     e.g. https://foodme-armanayvazyan-xxxx.onrender.com
+#   MONITORING_URL  e.g. https://foodme-monitoring-xxxx.onrender.com
+#
+# Note: keeping one service awake 24/7 uses ~730 of the 750 free
+# instance-hours/month — pinging both exceeds the free quota.
+name: keepalive
+
+on:
+  workflow_dispatch:
+  # schedule:
+  #   - cron: "*/10 * * * *"
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping backend
+        run: curl -fsS "${{ vars.BACKEND_URL }}/actuator/health"
+      - name: Ping monitoring
+        run: curl -fsS "${{ vars.MONITORING_URL }}/api/health"
