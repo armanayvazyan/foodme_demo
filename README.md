@@ -47,12 +47,12 @@ GlitchTip collects the app's errors so you can see them later.
 3. Pick **your fork** of this repository. Render finds `render.yaml` by itself.
 4. Render asks you to fill in a few values. Paste your DSNs from Step 2:
 
-   | Field | What to paste |
-   |---|---|
-   | `SENTRY_DSN` | DSN of the `backend` project |
-   | `VITE_SENTRY_DSN_WEB` | DSN of the `web` project |
-   | `VITE_SENTRY_DSN_ADMIN` | DSN of the `admin` project |
-   | `LOKI_PUSH_URL` | **leave empty** (used in Step 4) |
+   | Field                   | What to paste                    |
+   | ----------------------- | -------------------------------- |
+   | `SENTRY_DSN`            | DSN of the `backend` project     |
+   | `VITE_SENTRY_DSN_WEB`   | DSN of the `web` project         |
+   | `VITE_SENTRY_DSN_ADMIN` | DSN of the `admin` project       |
+   | `LOKI_PUSH_URL`         | **leave empty** (used in Step 4) |
 
 5. Click **Apply** / **Deploy** and wait. ⏳ **10–15 minutes is normal** — the
    free server is small and slow to start. "In progress" for a long time does
@@ -89,6 +89,7 @@ This adds one more service with dashboards, metrics and logs.
 
    Saving each one restarts that service automatically. Wait for both to be
    **Live** again.
+
 4. Open the monitoring URL. This is **Grafana**. Log in with `admin` / `admin`
    (it will ask you to set a new password — do it).
 
