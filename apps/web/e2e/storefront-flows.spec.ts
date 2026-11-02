@@ -59,6 +59,18 @@ test.describe("Storefront flows", () => {
     await expect(cart.getByText(/empty/i)).toBeVisible();
   });
 
+  // Regression for FM-BUG-07: decreasing from 2 must leave 1, not remove the item.
+  test("cart quantity decrease keeps item at minimum", async ({ page }) => {
+    const cart = await addFirstDishToCart(page);
+
+    await cart.getByRole("button", { name: "Increase quantity" }).click();
+    await expect(cart.locator(".fm-qty-grp p")).toHaveText("2");
+
+    await cart.getByRole("button", { name: "Decrease quantity" }).click();
+    await expect(cart.locator(".cic_root")).toHaveCount(1);
+    await expect(cart.locator(".fm-qty-grp p")).toHaveText("1");
+  });
+
   test("delivery shows address fields; takeaway hides them", async ({ page }) => {
     await addFirstDishToCart(page);
     await page.locator("aside.uc-panel").getByRole("link", { name: "Go to checkout" }).click();
