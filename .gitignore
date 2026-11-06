@@ -37,6 +37,9 @@ blob-report/
 .mcp.json
 !.mcp.json.example
 
+# --- Claude Code: personal overrides stay local --------------------------
+.claude/settings.local.json
+
 # --- IDE ------------------------------------------------------------------
 .idea/
 .vscode/
