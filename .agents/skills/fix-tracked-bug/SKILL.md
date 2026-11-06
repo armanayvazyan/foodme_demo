@@ -32,8 +32,10 @@ Work through these steps in order. Each step says what counts as done.
 - Make the smallest change that fixes the reported behaviour. Leave other bugs
   alone and report them, since this repository has planted defects for other
   exercises.
-- Add a test that fails without the fix: Playwright in `apps/<app>/e2e/` for UI
-  behaviour, JUnit in `apps/backend/src/test/` for backend behaviour.
+- Add a test that fails without the fix, at the lowest level that shows the
+  bug: `write-unit-tests` for logic in one function, `write-integration-tests`
+  for an endpoint, `write-e2e-tests` when the bug only shows in the browser.
+  Run the test against the buggy code first and see it fail.
 - Run the app's build and lint, and the new test.
 
 **Done when:** the build passes and the new test fails before the fix and passes after it.

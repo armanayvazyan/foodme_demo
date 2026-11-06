@@ -97,6 +97,21 @@ running.
 - When you fix a bug, add a test that fails without the fix. Use Playwright for
   UI behaviour and JUnit for backend behaviour.
 
+## Skills and rules
+
+Read the matching skill before starting these tasks:
+
+| Skill | Use it to |
+|---|---|
+| [`fix-tracked-bug`](.agents/skills/fix-tracked-bug/SKILL.md) | Reproduce, fix, ship and verify a Jira bug |
+| [`write-unit-tests`](.agents/skills/write-unit-tests/SKILL.md) | Test one function or class in isolation (JUnit + Mockito, Vitest) |
+| [`write-integration-tests`](.agents/skills/write-integration-tests/SKILL.md) | Test backend endpoints through MockMvc and H2 |
+| [`write-e2e-tests`](.agents/skills/write-e2e-tests/SKILL.md) | Test flows in the browser with Playwright |
+
+Per-area rules are in `.claude/rules/`: `backend.md`, `web.md`, `admin.md` and
+`testing.md`. Claude Code loads each one automatically when it works on
+matching files. Other agents should read the one for the area they're changing.
+
 ## Deploying
 
 - Render deploys the service automatically on every push to `main`
