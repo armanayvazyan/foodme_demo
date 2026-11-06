@@ -13,6 +13,8 @@ paths:
   `write-e2e-tests` for anything through the browser.
 - A regression test must fail against the buggy code before it passes against
   the fix. Run it both ways.
+- To run the existing suites, use the `run-regression` skill and its script
+  rather than calling each test command by hand.
 - Make test data unique (UUID or timestamp in emails), and never depend on
   test order or on totals other tests can change.
 - In Playwright, never use `page.waitForTimeout`. Wait on a web-first

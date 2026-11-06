@@ -1,0 +1,25 @@
+# Storefront e2e tests that are safe to run against the live Render site.
+# Each line is an exact Playwright test title. These tests only browse and use
+# the in-browser cart: they never register customers, log in or place orders,
+# and don't call a hard-coded localhost API.
+#
+# When you add a test here, check it writes nothing to the server. The runner
+# warns if a title stops matching (for example after a rename).
+
+# flake-cart-persistence.spec.ts
+cart item survives a page reload right after add-to-cart
+# flake-dish-modal.spec.ts
+dish modal opens and dish can be added to cart
+# happy-path.spec.ts
+dish modal additions raise cart line price
+# layout.spec.ts
+Home page structure and sections
+Explore page layout
+Responsive layout check - Mobile view
+# storefront-flows.spec.ts
+home CTA navigates to explore and header Explore chefs works
+empty checkout shows browse message
+cart quantity increase and remove item
+chef page from home popular section
+missing chef does not ask to clear another chef's cart
+failed order page renders recovery link

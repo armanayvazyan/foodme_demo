@@ -10,7 +10,8 @@
       "Bash(npm run build:*)",
       "Bash(npm run lint:*)",
       "Bash(npm run test:e2e:*)",
-      "Bash(./gradlew test:*)"
+      "Bash(./gradlew test:*)",
+      "Bash(.agents/skills/run-regression/scripts/run-regression.sh:*)"
     ],
     "deny": [
       "Read(./.env)",

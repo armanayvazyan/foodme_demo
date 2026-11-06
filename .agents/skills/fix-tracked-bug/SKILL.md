@@ -37,8 +37,10 @@ Work through these steps in order. Each step says what counts as done.
   for an endpoint, `write-e2e-tests` when the bug only shows in the browser.
   Run the test against the buggy code first and see it fail.
 - Run the app's build and lint, and the new test.
+- Run the `run-regression` skill to check the fix didn't break anything else.
 
-**Done when:** the build passes and the new test fails before the fix and passes after it.
+**Done when:** the build passes, the new test fails before the fix and passes
+after it, and the regression run has no new failures.
 
 ## 4. Ship it
 
