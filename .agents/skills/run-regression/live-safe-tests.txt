@@ -20,6 +20,7 @@ Responsive layout check - Mobile view
 home CTA navigates to explore and header Explore chefs works
 empty checkout shows browse message
 cart quantity increase and remove item
+cart decrease keeps the item until it reaches the minimum quantity
 chef page from home popular section
 missing chef does not ask to clear another chef's cart
 failed order page renders recovery link

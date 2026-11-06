@@ -93,10 +93,6 @@ pass without naming it.
 
 ## Known gaps
 
-- Nothing in the regression suites presses the cart's minus button, so it
-  would not catch FM-BUG-07 coming back. Add a test with `write-e2e-tests` or
-  `write-unit-tests` and, if it only uses the cart, list its title in
-  `live-safe-tests.txt`.
 - The storefront has no unit test runner yet, so `web-unit` is skipped until
   Vitest is set up (see `write-unit-tests`).
 
