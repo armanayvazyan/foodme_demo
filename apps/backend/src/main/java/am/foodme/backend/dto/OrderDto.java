@@ -33,6 +33,8 @@ public class OrderDto {
     private List<CreateOrderDishDto> createOrderDishes;
     private List<OrderDishDto> orderDishList;
     private LocalDateTime createdAt;
+    /** True only when the requesting customer owns this order and may still cancel it. */
+    private boolean cancellable;
 
     public static OrderDto mapEntityToDto(Order entity) {
         if (entity == null) {
