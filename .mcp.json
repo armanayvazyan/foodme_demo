@@ -1,0 +1,21 @@
+{
+  "mcpServers": {
+    "qase": {
+      "command": "cmd",
+      "args": ["/c", "npx", "-y", "@qase/mcp-server"],
+      "env": {
+        "QASE_API_TOKEN": "${QASE_API_TOKEN}"
+      }
+    },
+
+    "mcp-atlassian": {
+      "command": "uvx",
+      "args": ["--python", "3.12", "mcp-atlassian"],
+      "env": {
+        "JIRA_URL": "https://tatevpetrossian.atlassian.net",
+        "JIRA_USERNAME": "${JIRA_USERNAME}",
+        "JIRA_API_TOKEN": "${JIRA_API_TOKEN}"
+      }
+    }
+  }
+}
