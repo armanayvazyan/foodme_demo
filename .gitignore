@@ -60,3 +60,8 @@ docs/planted-defects.md
 
 # Machine-local compose override (host-port remap for this workstation)
 infra/docker-compose.local.yml
+
+# AgentSecrets environment files
+.env.development
+.env.staging
+.env.production
