@@ -162,10 +162,23 @@ public class OrderService {
     }
 
     @Transactional(readOnly = true)
-    public OrderDto getOrderByNumber(String number) {
+    public OrderDto getOrderByNumber(String number, String customerEmail) {
         Order order = orderRepository.findByNumber(number)
                 .orElseThrow(() -> new NotFoundException("Order " + number + " not found"));
-        return OrderDto.mapEntityToDto(order);
+        return toDtoFor(order, customerEmail);
+    }
+
+    @Transactional
+    public OrderDto cancelOrder(String number, String customerEmail) {
+        // Someone else's order answers 404, so order numbers can't be probed here.
+        Order order = orderRepository.findByNumberForUpdate(number)
+                .filter(o -> isOwnedBy(o, customerEmail))
+                .orElseThrow(() -> new NotFoundException("Order " + number + " not found"));
+        if (!"NEW".equals(order.getStatus())) {
+            throw new BadRequestException("This order can no longer be cancelled");
+        }
+        order.setStatus("CANCELLED");
+        return toDtoFor(orderRepository.save(order), customerEmail);
     }
 
     @Transactional(readOnly = true)
@@ -175,8 +188,20 @@ public class OrderService {
         Page<Order> orders = orderRepository.findByCustomerIdOrderByCreatedAtDesc(
                 customer.getId(), PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 50)));
         return new OrderListResponseDto(
-                orders.getContent().stream().map(OrderDto::mapEntityToDto).toList(),
+                orders.getContent().stream().map(order -> toDtoFor(order, customerEmail)).toList(),
                 orders.getTotalElements()
         );
+    }
+
+    private OrderDto toDtoFor(Order order, String customerEmail) {
+        OrderDto dto = OrderDto.mapEntityToDto(order);
+        dto.setCancellable("NEW".equals(order.getStatus()) && isOwnedBy(order, customerEmail));
+        return dto;
+    }
+
+    private boolean isOwnedBy(Order order, String customerEmail) {
+        return customerEmail != null
+                && order.getCustomer() != null
+                && order.getCustomer().getEmail().equalsIgnoreCase(customerEmail.trim());
     }
 }

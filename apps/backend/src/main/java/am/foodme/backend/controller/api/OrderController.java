@@ -37,7 +37,8 @@ public class OrderController {
     }
 
     @GetMapping("/number/{number}")
-    public OrderDto getOrderByNumber(@PathVariable String number) {
-        return orderService.getOrderByNumber(number);
+    public OrderDto getOrderByNumber(@PathVariable String number, Authentication authentication) {
+        // Public endpoint: authentication is null for guests.
+        return orderService.getOrderByNumber(number, authentication == null ? null : authentication.getName());
     }
 }

@@ -185,6 +185,7 @@ export interface FullOrderDto {
   orderDishList: OrderDishDto[];
   totalPrice: number;
   createdAt: string;
+  cancellable: boolean;
 }
 
 export interface ApiError {
