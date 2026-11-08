@@ -1,0 +1,8 @@
+**/node_modules
+**/dist
+**/build
+**/playwright-report
+**/test-results
+**/package-lock.json
+apps/backend/src/main/resources/static
+.claude/logs

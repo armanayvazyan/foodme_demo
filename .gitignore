@@ -60,3 +60,8 @@ docs/planted-defects.md
 
 # Machine-local compose override (host-port remap for this workstation)
 infra/docker-compose.local.yml
+
+# --- Claude Code / agents (local only) ------------------------------------
+.claude/settings.local.json
+.claude/logs/
+CLAUDE.local.md

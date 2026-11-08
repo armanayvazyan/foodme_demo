@@ -11,6 +11,11 @@ export default defineConfig({
   use: {
     baseURL,
     trace: "on-first-retry",
+    // Optional: point at a preinstalled Chromium when the bundled browser build is missing
+    // (containers / CI images). Unset = Playwright's own browser.
+    launchOptions: process.env.PW_CHROMIUM_PATH
+      ? { executablePath: process.env.PW_CHROMIUM_PATH }
+      : {},
   },
   projects: [
     {
