@@ -9,7 +9,8 @@ Work through these steps in order. Each step says what counts as done.
 
 ## 1. Understand the ticket
 
-- Read the Jira ticket: steps, expected and actual results.
+- Read the Jira ticket: steps, expected and actual results. The
+  `work-with-jira` skill covers finding and reading it.
 - Find the code path it describes. `AGENTS.md` lists where things live.
 - Run `git log -- <file>` on the file. A bug may have been fixed before and
   reintroduced, and the earlier fix shows the intended behaviour.
@@ -63,6 +64,8 @@ after it, and the regression run has no new failures.
 **Done when:** the live site behaves correctly in the reproduction and the boundary case.
 
 ## 6. Close the ticket
+
+Use `work-with-jira` for the comment format and the transition IDs.
 
 - Add a comment with the fix commit, the deploy, and a before-and-after table of
   the retest. Say what was not covered.
