@@ -91,6 +91,12 @@ Give the person:
 Never call a run green when suites were skipped, and never call a flaky test a
 pass without naming it.
 
+In Claude Code, the `report-regression` hook does part of this for you: when
+the script finishes, it shows the person a one-line result, hands you the full
+`summary.md`, and adds the run to `test-results/regression/history.md`. Check
+that history to tell whether a flaky test or failure is new. You still owe the
+person the full report above, with the failure reasons from the logs.
+
 ## Known gaps
 
 - The storefront has no unit test runner yet, so `web-unit` is skipped until
