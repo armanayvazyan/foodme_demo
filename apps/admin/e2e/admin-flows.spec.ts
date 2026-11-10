@@ -41,8 +41,24 @@ async function createOrderViaApi(request: import("@playwright/test").APIRequestC
     },
   });
   expect(createRes.ok()).toBeTruthy();
-  return createRes.json();
+  // `token` is the ordering customer's, so a test can act as them (e.g. cancel the order).
+  return { ...(await createRes.json()), token };
 }
+
+async function cancelAsCustomer(
+  request: import("@playwright/test").APIRequestContext,
+  order: { number: string; token: string },
+) {
+  const res = await request.post(`${API}/api/customer/orders/${order.number}/cancel`, {
+    headers: { Authorization: `Bearer ${order.token}` },
+  });
+  expect(res.ok()).toBeTruthy();
+  expect((await res.json()).status).toBe("CANCELLED");
+}
+
+// Same formatting as the dashboard's currency() helper.
+const amd = (value: number) =>
+  new Intl.NumberFormat("en-US", { style: "currency", currency: "AMD", maximumFractionDigits: 0 }).format(value);
 
 test.describe("Admin auth", () => {
   test("rejects bad password", async ({ page }) => {
@@ -105,6 +121,57 @@ test.describe("Admin resources", () => {
     await expect(page.locator("table tbody tr").first()).toBeVisible({ timeout: 15000 });
     await page.locator("table tbody tr").first().click();
     await expect(page).toHaveURL(/#\/dishes\/\d+/);
+  });
+
+  // TEST-10: the admin panel understands orders the customer cancelled.
+  test("cancelled order shows CANCELLED with no status actions", async ({ page, request }) => {
+    const order = await createOrderViaApi(request);
+    await cancelAsCustomer(request, order);
+
+    await page.goto("/#/orders");
+    await page.getByRole("button", { name: "Refresh" }).click();
+    await page.getByText(order.number).click();
+    await expect(page).toHaveURL(/#\/orders\/\d+\/show/);
+    await expect(
+      page.getByRole("heading", { name: `Order ${order.number}`, level: 5 }),
+    ).toBeVisible();
+
+    await expect(page.getByText("CANCELLED", { exact: true })).toBeVisible();
+    await expect(page.getByText("Change status")).toHaveCount(0);
+    await expect(page.getByRole("button", { name: /^Mark as/ })).toHaveCount(0);
+  });
+
+  test("orders list filters by CANCELLED", async ({ page, request }) => {
+    const order = await createOrderViaApi(request);
+    await cancelAsCustomer(request, order);
+
+    await page.goto("/#/orders");
+    await page.getByRole("combobox", { name: "Status" }).click();
+    await page.getByRole("option", { name: "CANCELLED", exact: true }).click();
+
+    const rows = page.locator("table tbody tr");
+    await expect(rows.filter({ hasText: order.number })).toBeVisible({ timeout: 15000 });
+    // Every row on the filtered page is a cancelled order.
+    await expect(rows.filter({ hasNotText: "CANCELLED" })).toHaveCount(0);
+  });
+
+  test("dashboard revenue excludes cancelled and rejected orders", async ({ page }) => {
+    // Stub the order list so the sum is deterministic whatever else is in the database.
+    const stubOrders = [
+      { id: 900001, number: "FM-STUB-NEW", status: "NEW", totalPrice: 1000 },
+      { id: 900002, number: "FM-STUB-CANCELLED", status: "CANCELLED", totalPrice: 5000 },
+      { id: 900003, number: "FM-STUB-REJECTED", status: "REJECTED", totalPrice: 7000 },
+    ].map((o) => ({ ...o, chefName: "Stub Chef", receiverName: "Stub", createdAt: "2026-11-10T12:00:00" }));
+    await page.route(/\/admin\/order\?/, (route) =>
+      route.fulfill({ json: { list: stubOrders, count: stubOrders.length } }),
+    );
+
+    await page.goto("/");
+    await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
+    const revenueCard = page.locator(".MuiCard-root").filter({ hasText: "Recent revenue" });
+    await expect(revenueCard).toContainText(amd(1000), { timeout: 15000 });
+    await expect(revenueCard).not.toContainText(amd(6000)); // NEW + CANCELLED
+    await expect(revenueCard).not.toContainText(amd(13000)); // all three
   });
 
   test("sidebar navigates between resources", async ({ page }) => {

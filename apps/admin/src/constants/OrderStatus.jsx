@@ -3,6 +3,8 @@ const OrderStatus = {
     ACCEPTED: 'ACCEPTED',
     DELIVERED: 'DELIVERED',
     REJECTED: 'REJECTED',
+    // Set by the customer (before the kitchen accepts), never by an admin.
+    CANCELLED: 'CANCELLED',
 };
 
 const OrderStatusColors = {
@@ -10,6 +12,7 @@ const OrderStatusColors = {
     [OrderStatus.ACCEPTED]: 'warning',
     [OrderStatus.DELIVERED]: 'success',
     [OrderStatus.REJECTED]: 'error',
+    [OrderStatus.CANCELLED]: 'default',
 };
 
 // Allowed forward transitions per current status
@@ -18,6 +21,7 @@ const OrderStatusTransitions = {
     [OrderStatus.ACCEPTED]: [OrderStatus.DELIVERED, OrderStatus.REJECTED],
     [OrderStatus.DELIVERED]: [],
     [OrderStatus.REJECTED]: [],
+    [OrderStatus.CANCELLED]: [],
 };
 
 export { OrderStatus, OrderStatusColors, OrderStatusTransitions };
