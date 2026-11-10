@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ChevronRight, Package } from "lucide-react";
 import { foodmeApi } from "@/api/foodme";
 import { Button } from "@/components/ui/button";
+import { CancelOrderButton } from "@/components/CancelOrderButton";
 import { useAuth } from "@/providers/auth-provider";
 import { formatAmd } from "@/lib/utils";
 
@@ -11,11 +12,13 @@ const STATUS_LABEL: Record<string, string> = {
   ACCEPTED: "Preparing",
   DELIVERED: "Delivered",
   REJECTED: "Declined",
+  CANCELLED: "Cancelled",
 };
 
 function statusClass(status: string) {
   if (status === "DELIVERED") return "bg-emerald-50 text-emerald-800 ring-emerald-100";
   if (status === "REJECTED") return "bg-red-50 text-red-700 ring-red-100";
+  if (status === "CANCELLED") return "bg-stone-50 text-stone-500 ring-stone-200";
   if (status === "ACCEPTED") return "bg-amber-50 text-amber-800 ring-amber-100";
   return "bg-zinc-100 text-zinc-700 ring-zinc-200/80";
 }
@@ -120,6 +123,8 @@ export default function Orders() {
                   </div>
                 </div>
               </Link>
+              {/* Outside the <Link>: a button can't be nested inside a link. */}
+              <CancelOrderButton number={order.number} status={order.status} className="mt-2" />
             </li>
           ))}
         </ul>
