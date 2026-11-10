@@ -22,7 +22,11 @@ public class AdminOrderService {
 
     private static final Map<String, Set<String>> ALLOWED_TRANSITIONS = Map.of(
             "NEW", Set.of("ACCEPTED", "REJECTED"),
-            "ACCEPTED", Set.of("DELIVERED", "REJECTED")
+            "ACCEPTED", Set.of("DELIVERED", "REJECTED"),
+            // Final statuses: an admin can't move an order out of these.
+            "DELIVERED", Set.of(),
+            "REJECTED", Set.of(),
+            "CANCELLED", Set.of()
     );
 
     private final OrderRepository orderRepository;
@@ -55,11 +59,16 @@ public class AdminOrderService {
         if (allowed == null || !allowed.contains(newStatus)) {
             throw new BadRequestException("Cannot transition order from " + order.getStatus() + " to " + newStatus);
         }
-        order.setStatus(newStatus);
-        if ("REJECTED".equals(newStatus)) {
-            order.setRejectReason(rejectReason);
+        // Conditional write: if the customer cancelled (or another admin changed the status)
+        // after we read the order, this updates 0 rows instead of overwriting their change.
+        if (orderRepository.updateStatusIfCurrent(id, order.getStatus(), newStatus) == 0) {
+            throw new BadRequestException("Order " + id + " was changed by someone else; reload and try again");
         }
-        return OrderDto.mapEntityToDto(orderRepository.save(order));
+        Order updated = findEntity(id);
+        if ("REJECTED".equals(newStatus)) {
+            updated.setRejectReason(rejectReason);
+        }
+        return OrderDto.mapEntityToDto(orderRepository.save(updated));
     }
 
     private Order findEntity(Long id) {
