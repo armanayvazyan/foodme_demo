@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "jira": {
+      "command": "agentsecrets",
+      "args": ["env", "--", "uvx", "mcp-atlassian"],
+      "env": {
+        "JIRA_URL": "https://kokosiposhi.atlassian.net"
+      }
+    },
+    "qase": {
+      "command": "agentsecrets",
+      "args": ["env", "--", "npx", "-y", "@qase/mcp-server"]
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@latest"]
+    }
+  }
+}
