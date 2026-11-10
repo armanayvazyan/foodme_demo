@@ -72,8 +72,9 @@ const Dashboard = () => {
         sort: { field: 'createdAt', order: 'DESC' },
     });
 
+    // Declined (REJECTED) and customer-cancelled (FOODQA-2) orders earn nothing.
     const recentRevenue = recentOrders
-        .filter((o) => o.status !== OrderStatus.REJECTED)
+        .filter((o) => o.status !== OrderStatus.REJECTED && o.status !== OrderStatus.CANCELLED)
         .reduce((sum, o) => sum + (o.totalPrice ?? 0), 0);
 
     const statusCounts = recentOrders.reduce((acc, o) => {

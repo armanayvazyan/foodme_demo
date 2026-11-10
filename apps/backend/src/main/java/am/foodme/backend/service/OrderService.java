@@ -168,6 +168,29 @@ public class OrderService {
         return OrderDto.mapEntityToDto(order);
     }
 
+    /**
+     * FOODQA-2: the signed-in customer cancels their own order while it is still NEW.
+     * The status change is a conditional update, so a concurrent kitchen acceptance
+     * and this cancellation can't both succeed.
+     */
+    @Transactional
+    public OrderDto cancelOrder(String number, String customerEmail) {
+        Customer customer = customerRepository.findByEmail(customerEmail == null ? "" : customerEmail.trim().toLowerCase())
+                .orElseThrow(() -> new NotFoundException("Customer not found"));
+        Order order = orderRepository.findByNumberAndCustomerId(number, customer.getId())
+                .orElseThrow(() -> new NotFoundException("Order " + number + " not found"));
+        if (!"NEW".equals(order.getStatus())) {
+            throw new BadRequestException("Cannot cancel order in status " + order.getStatus());
+        }
+        int updated = orderRepository.transitionStatus(order.getId(), "NEW", "CANCELLED");
+        if (updated == 0) {
+            throw new BadRequestException("Order status changed concurrently; reload and retry");
+        }
+        Order saved = orderRepository.findById(order.getId())
+                .orElseThrow(() -> new NotFoundException("Order " + number + " not found"));
+        return OrderDto.mapEntityToDto(saved);
+    }
+
     @Transactional(readOnly = true)
     public OrderListResponseDto listForCustomer(String customerEmail, int page, int size) {
         Customer customer = customerRepository.findByEmail(customerEmail == null ? "" : customerEmail.trim().toLowerCase())

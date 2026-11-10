@@ -51,15 +51,20 @@ public class AdminOrderService {
     @Transactional
     public OrderDto updateStatus(Long id, String newStatus, String rejectReason) {
         Order order = findEntity(id);
-        Set<String> allowed = ALLOWED_TRANSITIONS.get(order.getStatus());
+        String currentStatus = order.getStatus();
+        Set<String> allowed = ALLOWED_TRANSITIONS.get(currentStatus);
         if (allowed == null || !allowed.contains(newStatus)) {
-            throw new BadRequestException("Cannot transition order from " + order.getStatus() + " to " + newStatus);
+            throw new BadRequestException("Cannot transition order from " + currentStatus + " to " + newStatus);
         }
-        order.setStatus(newStatus);
-        if ("REJECTED".equals(newStatus)) {
-            order.setRejectReason(rejectReason);
+        // Conditional update (FOODQA-2): only applies while the status is still the one
+        // read above, so a concurrent customer cancellation can't be overwritten.
+        int updated = "REJECTED".equals(newStatus)
+                ? orderRepository.transitionStatusWithRejectReason(id, currentStatus, newStatus, rejectReason)
+                : orderRepository.transitionStatus(id, currentStatus, newStatus);
+        if (updated == 0) {
+            throw new BadRequestException("Order status changed concurrently; reload and retry");
         }
-        return OrderDto.mapEntityToDto(orderRepository.save(order));
+        return OrderDto.mapEntityToDto(findEntity(id));
     }
 
     private Order findEntity(Long id) {

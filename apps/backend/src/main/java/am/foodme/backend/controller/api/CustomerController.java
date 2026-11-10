@@ -1,12 +1,15 @@
 package am.foodme.backend.controller.api;
 
 import am.foodme.backend.dto.CustomerProfileDto;
+import am.foodme.backend.dto.OrderDto;
 import am.foodme.backend.dto.OrderListResponseDto;
 import am.foodme.backend.service.CustomerAuthService;
 import am.foodme.backend.service.OrderService;
 import am.foodme.backend.utils.ControllerUtil;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -33,5 +36,11 @@ public class CustomerController {
                                        @RequestParam(defaultValue = "0") int page,
                                        @RequestParam(defaultValue = "20") int size) {
         return orderService.listForCustomer(authentication.getName(), page, size);
+    }
+
+    /** FOODQA-2: customer cancels their own order while it is NEW. CUSTOMER role via /api/customer/**. */
+    @PostMapping("/orders/{number}/cancel")
+    public OrderDto cancelOrder(@PathVariable String number, Authentication authentication) {
+        return orderService.cancelOrder(number, authentication.getName());
     }
 }

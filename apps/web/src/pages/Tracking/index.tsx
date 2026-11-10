@@ -29,10 +29,20 @@ const STATUS_COPY: Record<string, { title: string; detail: string }> = {
     title: "Order declined",
     detail: "This order couldn’t be fulfilled. Contact support if you need help.",
   },
+  // FOODQA-2
+  CANCELLED: {
+    title: "Order cancelled",
+    detail: "You cancelled this order before the kitchen accepted it.",
+  },
 };
 
+// Final statuses that leave the Received → Preparing → Delivered flow.
+function isTerminal(status: string) {
+  return status === "REJECTED" || status === "CANCELLED";
+}
+
 function stepIndex(status: string): number {
-  if (status === "REJECTED") return -1;
+  if (isTerminal(status)) return -1;
   const i = STEPS.findIndex((s) => s.key === status);
   return i >= 0 ? i : 0;
 }
@@ -85,7 +95,7 @@ export default function Tracking() {
     detail: "Current status for your order.",
   };
   const active = stepIndex(data.status);
-  const rejected = data.status === "REJECTED";
+  const terminal = isTerminal(data.status);
 
   return (
     <div className="tp_wrap mx-auto max-w-7xl px-4 py-10 md:px-8 md:py-14">
@@ -104,9 +114,16 @@ export default function Tracking() {
 
       <div className="bezel-outer shadow-diffuse mt-8 animate-fade-up [animation-delay:60ms]">
         <div className="bezel-inner p-5 md:p-6">
-          {rejected ? (
+          {terminal ? (
             <div className="flex items-start gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-50 text-red-600 ring-1 ring-red-100">
+              {/* FOODQA-2: Cancelled uses the same neutral grey as its badge on /orders; Declined stays red. */}
+              <div
+                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ring-1 ${
+                  data.status === "CANCELLED"
+                    ? "bg-zinc-50 text-zinc-500 ring-zinc-200"
+                    : "bg-red-50 text-red-600 ring-red-100"
+                }`}
+              >
                 <X size={18} strokeWidth={2} />
               </div>
               <div>
