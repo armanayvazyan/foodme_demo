@@ -168,6 +168,22 @@ public class OrderService {
         return OrderDto.mapEntityToDto(order);
     }
 
+    @Transactional
+    public OrderDto cancelForCustomer(String number, String customerEmail) {
+        Customer customer = customerRepository.findByEmail(customerEmail == null ? "" : customerEmail.trim().toLowerCase())
+                .orElseThrow(() -> new NotFoundException("Customer not found"));
+        // Another customer's order gets the same 404 as a missing one, so we don't reveal that it exists.
+        Order order = orderRepository.findByNumber(number)
+                .filter(o -> o.getCustomer() != null && customer.getId().equals(o.getCustomer().getId()))
+                .orElseThrow(() -> new NotFoundException("Order " + number + " not found"));
+
+        if (!"NEW".equals(order.getStatus())
+                || orderRepository.updateStatusIfCurrent(order.getId(), "NEW", "CANCELLED") == 0) {
+            throw new BadRequestException("Only orders that haven't been accepted can be cancelled");
+        }
+        return OrderDto.mapEntityToDto(orderRepository.findById(order.getId()).orElseThrow());
+    }
+
     @Transactional(readOnly = true)
     public OrderListResponseDto listForCustomer(String customerEmail, int page, int size) {
         Customer customer = customerRepository.findByEmail(customerEmail == null ? "" : customerEmail.trim().toLowerCase())
