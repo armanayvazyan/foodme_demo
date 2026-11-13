@@ -1,0 +1,39 @@
+{
+  "mcpServers": {
+    "qase": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@qase/mcp-server"
+      ],
+      "env": {
+        "QASE_API_TOKEN": "${QASE_API_TOKEN}"
+      }
+    },
+    "playwright": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@playwright/mcp@latest"
+      ]
+    },
+    "agentsecrets": {
+      "command": "agentsecrets",
+      "args": [
+        "mcp",
+        "serve"
+      ]
+    },
+    "mcp-atlassian": {
+      "command": "uvx",
+      "args": [
+        "mcp-atlassian"
+      ],
+      "env": {
+        "JIRA_URL": "https://<project>.atlassian.net",
+        "JIRA_USERNAME": "<username>",
+        "JIRA_API_TOKEN": "${JIRA_API_TOKEN}"
+      }
+    }
+  }
+}

@@ -1,0 +1,92 @@
+{
+  "model": "claude-sonnet-5-5",
+  "theme": "dark",
+  "permissions": {
+    "allow": [
+       "Read(.env)"
+    ],
+    "deny": [
+      "Edit(.env)",
+      "Edit(/.env)",
+      "Edit(./.env)",
+      "Edit(**/.env)",
+      "Write(.env)",
+      "Write(/.env)",
+      "Write(**/.env)",
+      "NotebookEdit(**/.env)",
+
+      "Bash(*> .env)",
+      "Bash(*> .env *)",
+      "Bash(*>.env)",
+      "Bash(*>.env *)",
+      "Bash(*> ./.env)",
+      "Bash(*> ./.env *)",
+      "Bash(*>./.env)",
+      "Bash(*>./.env *)",
+      "Bash(*/.env)",
+      "Bash(*/.env *)",
+
+      "Bash(*tee .env*)",
+      "Bash(*tee -a .env*)",
+      "Bash(*tee ./.env*)",
+      "Bash(*tee -a ./.env*)",
+
+      "Bash(sed -i*.env*)",
+      "Bash(sed *-i*.env*)",
+      "Bash(gsed -i*.env*)",
+      "Bash(perl -i*.env*)",
+      "Bash(perl *-i*.env*)",
+      "Bash(perl -pi*.env*)",
+      "Bash(awk -i*.env*)",
+      "Bash(ruby -i*.env*)",
+      "Bash(ex *.env*)",
+      "Bash(ed *.env*)",
+      "Bash(vi *.env*)",
+      "Bash(vim *.env*)",
+      "Bash(nvim *.env*)",
+      "Bash(nano *.env*)",
+      "Bash(emacs *.env*)",
+
+      "Bash(cp * .env)",
+      "Bash(cp * ./.env)",
+      "Bash(mv * .env)",
+      "Bash(mv * ./.env)",
+      "Bash(mv .env *)",
+      "Bash(mv ./.env *)",
+      "Bash(rm .env)",
+      "Bash(rm ./.env)",
+      "Bash(rm -f .env)",
+      "Bash(rm -f ./.env)",
+      "Bash(rm *.env)",
+      "Bash(ln * .env)",
+      "Bash(ln * ./.env)",
+      "Bash(install * .env)",
+      "Bash(rsync * .env)",
+      "Bash(truncate *.env*)",
+      "Bash(dd *of=.env*)",
+      "Bash(dd *of=./.env*)",
+      "Bash(chmod *.env)",
+      "Bash(touch .env)",
+      "Bash(touch ./.env)",
+
+      "Bash(*open(*.env*w*)",
+      "Bash(*open(*.env*a*)",
+      "Bash(*writeFile*.env*)",
+      "Bash(*appendFile*.env*)",
+      "Bash(*write_text*.env*)",
+      "Bash(*File.write*.env*)",
+
+      "Bash(rm -rf *)"
+    ]
+  },
+  "env": {
+    "JIRA_API_TOKEN": "dummy"
+  },
+  "sandbox": {
+    "enabled": true,
+    "allowUnsandboxedCommands": false,
+    "filesystem": {
+      "denyWrite": ["./.env"]
+    }
+  }
+}
