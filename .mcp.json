@@ -30,8 +30,8 @@
         "mcp-atlassian"
       ],
       "env": {
-        "JIRA_URL": "https://<project>.atlassian.net",
-        "JIRA_USERNAME": "<username>",
+        "JIRA_URL": "https://foodme-armanayvazyan.atlassian.net",
+        "JIRA_USERNAME": "ayvazyan.a.arman@gmail.com",
         "JIRA_API_TOKEN": "${JIRA_API_TOKEN}"
       }
     }
