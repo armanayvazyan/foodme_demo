@@ -18,6 +18,10 @@ jobs:
         with:
           fetch-depth: 1
 
+      # .mcp.json starts mcp-atlassian via uvx, which ubuntu-latest lacks.
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
       - name: Run Claude Code Jira Review
         id: claude-jira-review
         uses: anthropics/claude-code-action@v1
