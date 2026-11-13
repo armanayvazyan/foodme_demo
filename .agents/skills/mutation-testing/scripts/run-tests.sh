@@ -4,6 +4,7 @@
 #
 #   KILLED    tests failed            SURVIVED  tests passed
 #   TIMEOUT   tests ran too long      INVALID   mutant doesn't compile or touches tests
+#             (a missing test runner is also INVALID, never KILLED)
 #
 # Usage: run-tests.sh <backend|web|admin> <mutant-id>
 #   Use the id `baseline` on an unmutated tree first: it must report SURVIVED (green)
@@ -100,6 +101,9 @@ if [ $rc -eq 0 ]; then
 elif [ $rc -eq 124 ] || [ $rc -eq 142 ]; then
   [ "$module" = backend ] && ./gradlew --stop > /dev/null 2>&1
   finish TIMEOUT "Tests ran longer than ${limit}s." "$seconds"
+elif grep -qE "npx canceled due to missing packages|command not found|Cannot find module|ERR_MODULE_NOT_FOUND|Missing script|Could not find or load main class|gradlew: No such file" "$log"; then
+  # The test runner itself is missing: that says nothing about the mutant, so it is never a kill.
+  finish INVALID "The test runner could not start (missing tool or dependency). See ${log#"$root"/}." "$seconds"
 elif [ $compile_rc -ne 0 ] ||
      grep -qE "Compilation failed|compileJava FAILED|compileTestJava FAILED|Failed to parse source|Transform failed|PARSE_ERROR" "$log"; then
   finish INVALID "The mutant does not compile. See ${log#"$root"/}." "$seconds"
