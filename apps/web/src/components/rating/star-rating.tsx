@@ -1,5 +1,6 @@
-import { useId } from "react";
+import * as RadioGroupPrimitive from "@radix-ui/react-radio-group";
 import { Star } from "lucide-react";
+import { RadioGroup } from "@/components/ui/radio-group";
 import { cn } from "@/lib/utils";
 
 const STAR_VALUES = [1, 2, 3, 4, 5] as const;
@@ -30,8 +31,9 @@ export function StarDisplay({ stars, size = 16, className }: { stars: number; si
 }
 
 /**
- * Star picker built on native radio buttons, so it works with mouse, touch and keyboard
- * (Tab into the group, arrow keys to change) and screen readers announce "3 stars, 3 of 5".
+ * Star picker built on the shared Radix RadioGroup (components/ui/radio-group), so it gets the
+ * kit's roving focus and keyboard handling (Tab into the group, arrow keys to change), and screen
+ * readers announce each star as a radio ("3 stars, 3 of 5").
  */
 export function StarInput({
   value,
@@ -44,46 +46,34 @@ export function StarInput({
   disabled?: boolean;
   label?: string;
 }) {
-  const name = useId();
   return (
-    <fieldset className="border-0 p-0" disabled={disabled}>
-      <legend className="sr-only">{label}</legend>
-      <div className="flex items-center gap-1">
-        {STAR_VALUES.map((star) => {
-          const id = `${name}-${star}`;
-          const filled = star <= value;
-          return (
-            <span key={star}>
-              <input
-                id={id}
-                type="radio"
-                name={name}
-                value={star}
-                checked={value === star}
-                onChange={() => onChange(star)}
-                className="peer sr-only"
-              />
-              <label
-                htmlFor={id}
-                className={cn(
-                  "flex h-11 w-11 cursor-pointer items-center justify-center rounded-full transition-transform",
-                  "hover:scale-110 active:scale-95",
-                  "peer-focus-visible:ring-2 peer-focus-visible:ring-zinc-900 peer-focus-visible:ring-offset-2",
-                  disabled && "cursor-not-allowed opacity-60",
-                )}
-              >
-                <Star
-                  size={30}
-                  strokeWidth={1.5}
-                  aria-hidden="true"
-                  className={filled ? "fill-amber-400 text-amber-400" : "fill-transparent text-zinc-300"}
-                />
-                <span className="sr-only">{starLabel(star)}</span>
-              </label>
-            </span>
-          );
-        })}
-      </div>
-    </fieldset>
+    <RadioGroup
+      aria-label={label}
+      value={value > 0 ? String(value) : ""}
+      onValueChange={(next) => onChange(Number(next))}
+      disabled={disabled}
+      className="flex items-center gap-1"
+    >
+      {STAR_VALUES.map((star) => (
+        <RadioGroupPrimitive.Item
+          key={star}
+          value={String(star)}
+          aria-label={starLabel(star)}
+          className={cn(
+            "flex h-11 w-11 items-center justify-center rounded-full transition-transform",
+            "hover:scale-110 active:scale-95",
+            "focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 focus-visible:ring-offset-2",
+            "disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:scale-100",
+          )}
+        >
+          <Star
+            size={30}
+            strokeWidth={1.5}
+            aria-hidden="true"
+            className={star <= value ? "fill-amber-400 text-amber-400" : "fill-transparent text-zinc-300"}
+          />
+        </RadioGroupPrimitive.Item>
+      ))}
+    </RadioGroup>
   );
 }

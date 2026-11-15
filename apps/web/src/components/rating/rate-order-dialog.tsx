@@ -8,6 +8,10 @@ import { StarInput } from "@/components/rating/star-rating";
 
 const MAX_COMMENT = 1000;
 
+function isAlreadyRated(error: unknown) {
+  return error instanceof ApiRequestError && error.status === 409;
+}
+
 /**
  * "Rate order" modal (SCRUM-4 R16-R18): 5 stars + optional comment. On success it closes and
  * refreshes My Orders, the tracking page and chef ratings; on failure it shows the reason and
@@ -36,14 +40,23 @@ export function RateOrderDialog({
         comment: comment.trim() ? comment.trim() : undefined,
       }),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["my-orders"] });
-      void queryClient.invalidateQueries({ queryKey: ["order", orderNumber] });
-      // R12: chef ratings on the storefront pick up the new average.
-      void queryClient.invalidateQueries({ queryKey: ["chef"] });
-      void queryClient.invalidateQueries({ queryKey: ["chefs"] });
+      refreshRatedOrder();
       onOpenChange(false);
     },
+    onError: (error) => {
+      // 409: the order was already rated (e.g. in another tab). Retrying can never succeed, so
+      // refresh the order so the page shows the existing rating instead of "Rate order".
+      if (isAlreadyRated(error)) refreshRatedOrder();
+    },
   });
+
+  function refreshRatedOrder() {
+    void queryClient.invalidateQueries({ queryKey: ["my-orders"] });
+    void queryClient.invalidateQueries({ queryKey: ["order", orderNumber] });
+    // R12: chef ratings on the storefront pick up the new average.
+    void queryClient.invalidateQueries({ queryKey: ["chef"] });
+    void queryClient.invalidateQueries({ queryKey: ["chefs"] });
+  }
 
   // Callers mount this dialog only while it's open, so every opening starts with a clean form.
   const handleOpenChange = (next: boolean) => {
@@ -67,6 +80,7 @@ export function RateOrderDialog({
       : mutation.error
         ? "Couldn’t save your rating. Check your connection and try again."
         : null;
+  const alreadyRated = isAlreadyRated(mutation.error);
   const error = validationError ?? serverError;
   const errorId = `rate-${orderNumber}-error`;
 
@@ -118,15 +132,17 @@ export function RateOrderDialog({
           <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button
               type="button"
-              variant="outline"
+              variant={alreadyRated ? "default" : "outline"}
               onClick={() => handleOpenChange(false)}
               disabled={mutation.isPending}
             >
-              Cancel
+              {alreadyRated ? "Close" : "Cancel"}
             </Button>
-            <Button type="submit" disabled={mutation.isPending}>
-              {mutation.isPending ? "Saving…" : serverError ? "Try again" : "Submit rating"}
-            </Button>
+            {!alreadyRated && (
+              <Button type="submit" disabled={mutation.isPending}>
+                {mutation.isPending ? "Saving…" : serverError ? "Try again" : "Submit rating"}
+              </Button>
+            )}
           </div>
         </form>
       </DialogContent>

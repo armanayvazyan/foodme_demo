@@ -17,7 +17,8 @@ const ChefEdit = () => (
             <TextInput source="username" fullWidth />
             <TextInput source="phoneNumber" label="Phone" fullWidth />
             <SelectInput source="status" choices={statusChoices} fullWidth />
-            <NumberInput source="rating" min={0} max={5} step={0.1} />
+            {/* Rating is the average of customer reviews (SCRUM-4); shown, not editable. */}
+            <NumberInput source="rating" label="Rating (from customer reviews)" disabled />
             <NumberInput source="deliveryPrice" label="Delivery price" />
             <NumberInput source="freeDeliveryFrom" label="Free delivery from" />
         </SimpleForm>

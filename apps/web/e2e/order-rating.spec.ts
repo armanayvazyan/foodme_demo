@@ -76,8 +76,7 @@ test("customer rates a delivered order from My Orders and the rating persists", 
   await dialog.getByRole("button", { name: "Submit rating" }).click();
   await expect(dialog.getByRole("alert")).toHaveText("Choose from 1 to 5 stars.");
 
-  // Click the visible star (the radio itself is visually hidden), then confirm the radio took it.
-  await dialog.locator("label", { hasText: "4 stars" }).click();
+  await dialog.getByRole("radio", { name: "4 stars" }).click();
   await expect(dialog.getByRole("radio", { name: "4 stars" })).toBeChecked();
   await comment.fill("Arrived hot, great portion.");
   await dialog.getByRole("button", { name: "Submit rating" }).click();

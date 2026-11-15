@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 
 /** SCRUM-4: customers rate their delivered orders; each rating refreshes the chef's average. */
@@ -32,6 +33,7 @@ public class OrderRatingService {
     static final String MSG_BAD_STARS = "Stars must be a whole number from 1 to 5.";
     static final String MSG_COMMENT_TOO_LONG = "Comment must be at most 1000 characters.";
     static final int MAX_COMMENT_LENGTH = 1000;
+    private static final String UNIQUE_VIOLATION_SQLSTATE = "23505";
 
     private final OrderRepository orderRepository;
     private final OrderRatingRepository orderRatingRepository;
@@ -85,8 +87,12 @@ public class OrderRatingService {
         try {
             orderRatingRepository.saveAndFlush(rating);
         } catch (DataIntegrityViolationException e) {
-            // Backstop for the unique(order_id) constraint.
-            throw new ConflictException(MSG_ALREADY_REVIEWED);
+            // Backstop for the unique(order_id) constraint. Any other violation (FK, CHECK, length)
+            // is a real error and must not be reported as "already reviewed".
+            if (isUniqueViolation(e)) {
+                throw new ConflictException(MSG_ALREADY_REVIEWED);
+            }
+            throw e;
         }
 
         chef.setRating(roundToOneDecimal(orderRatingRepository.averageStarsForChef(chef.getId())));
@@ -94,6 +100,16 @@ public class OrderRatingService {
 
         order.setRating(rating);
         return OrderDto.mapEntityToDto(order);
+    }
+
+    /** SQLSTATE 23505 = unique_violation (same code in PostgreSQL and H2). */
+    static boolean isUniqueViolation(Throwable e) {
+        for (Throwable t = e; t != null; t = t.getCause()) {
+            if (t instanceof SQLException sql && UNIQUE_VIOLATION_SQLSTATE.equals(sql.getSQLState())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     static int validateStars(Double stars) {

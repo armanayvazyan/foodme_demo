@@ -151,7 +151,7 @@ class OrderRatingTest {
         // R13/R19: My Orders and tracking both show it on later reads.
         mockMvc.perform(get("/api/customer/orders").header("Authorization", "Bearer " + token))
                 .andExpect(jsonPath("$.list[0].rating.stars").value(5));
-        mockMvc.perform(get("/api/order/number/" + number))
+        mockMvc.perform(get("/api/order/number/" + number).header("Authorization", "Bearer " + token))
                 .andExpect(jsonPath("$.rating.stars").value(5))
                 .andExpect(jsonPath("$.rating.comment").value("Lovely, still warm!"));
 
@@ -209,7 +209,7 @@ class OrderRatingTest {
                 .andExpect(jsonPath("$.message").value("Order already reviewed."));
 
         // The first rating is untouched.
-        mockMvc.perform(get("/api/order/number/" + number))
+        mockMvc.perform(get("/api/order/number/" + number).header("Authorization", "Bearer " + token))
                 .andExpect(jsonPath("$.rating.stars").value(4))
                 .andExpect(jsonPath("$.rating.comment").value("first"));
     }
@@ -226,7 +226,7 @@ class OrderRatingTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("Order not found"));
 
-        mockMvc.perform(get("/api/order/number/" + number))
+        mockMvc.perform(get("/api/order/number/" + number).header("Authorization", "Bearer " + owner))
                 .andExpect(jsonPath("$.rating").value(nullValue()));
     }
 
@@ -246,10 +246,11 @@ class OrderRatingTest {
                         .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"stars\": \"lots\"}"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Invalid value for field 'stars'"));
 
         // None of the rejected attempts saved anything.
-        mockMvc.perform(get("/api/order/number/" + number))
+        mockMvc.perform(get("/api/order/number/" + number).header("Authorization", "Bearer " + token))
                 .andExpect(jsonPath("$.rating").value(nullValue()));
     }
 
@@ -269,12 +270,31 @@ class OrderRatingTest {
 
     @Test
     void ac4_notSignedInCannotRate() throws Exception {
-        String number = deliveredOrder(customerToken());
+        String token = customerToken();
+        String number = deliveredOrder(token);
 
         rate(null, number, 5, null).andExpect(status().isUnauthorized());
 
-        mockMvc.perform(get("/api/order/number/" + number))
+        mockMvc.perform(get("/api/order/number/" + number).header("Authorization", "Bearer " + token))
                 .andExpect(jsonPath("$.rating").value(nullValue()));
+    }
+
+    // --- privacy: the review is only shown to the customer who placed the order -------------
+
+    @Test
+    void ratingIsHiddenFromAnonymousAndOtherCustomersOnTracking() throws Exception {
+        String owner = customerToken();
+        String number = deliveredOrder(owner);
+        rate(owner, number, 2, "private feedback").andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/order/number/" + number))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.number").value(number))
+                .andExpect(jsonPath("$.rating").value(nullValue()));
+        mockMvc.perform(get("/api/order/number/" + number).header("Authorization", "Bearer " + customerToken()))
+                .andExpect(jsonPath("$.rating").value(nullValue()));
+        mockMvc.perform(get("/api/order/number/" + number).header("Authorization", "Bearer " + owner))
+                .andExpect(jsonPath("$.rating.comment").value("private feedback"));
     }
 
     // --- AC5: chef rating = average of customer ratings, one decimal --------------------------

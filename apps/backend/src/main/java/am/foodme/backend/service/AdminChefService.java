@@ -29,8 +29,11 @@ public class AdminChefService {
     }
 
     public Chef update(Long id, Chef chef) {
-        getById(id);
+        Chef existing = getById(id);
         chef.setId(id);
+        // SCRUM-4: the rating is the average of customer reviews (OrderRatingService), never an
+        // admin-entered value, so an edit must not overwrite it with whatever the form sent.
+        chef.setRating(existing.getRating());
         return chefRepository.save(chef);
     }
 }

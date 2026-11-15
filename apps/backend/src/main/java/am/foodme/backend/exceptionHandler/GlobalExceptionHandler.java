@@ -1,5 +1,6 @@
 package am.foodme.backend.exceptionHandler;
 
+import com.fasterxml.jackson.databind.JsonMappingException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +13,7 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.time.Instant;
+import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -38,7 +40,21 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ErrorResponseDto> handleUnreadableBody(HttpMessageNotReadableException ex, HttpServletRequest request) {
-        return build(HttpStatus.BAD_REQUEST, "Malformed request body", request, null);
+        return build(HttpStatus.BAD_REQUEST, unreadableBodyMessage(ex), request, null);
+    }
+
+    /**
+     * Names the offending field when Jackson can tell us (e.g. {"stars": "lots"} gives
+     * "Invalid value for field 'stars'"), so clients get more than a generic message.
+     */
+    static String unreadableBodyMessage(HttpMessageNotReadableException ex) {
+        if (ex.getCause() instanceof JsonMappingException mapping && !mapping.getPath().isEmpty()) {
+            String field = mapping.getPath().stream()
+                    .map(ref -> ref.getFieldName() != null ? ref.getFieldName() : "[" + ref.getIndex() + "]")
+                    .collect(Collectors.joining(".")).replace(".[", "[");
+            return "Invalid value for field '" + field + "'";
+        }
+        return "Malformed request body";
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
