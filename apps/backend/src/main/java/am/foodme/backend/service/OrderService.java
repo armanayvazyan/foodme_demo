@@ -163,11 +163,26 @@ public class OrderService {
         return new OrderCreateResponseDto(saved.getNumber(), saved.getStatus(), saved.getTotalPrice());
     }
 
+    /**
+     * Public order tracking. Anyone with the number can see the order's progress, but the
+     * customer's review (SCRUM-4) is shown only to the customer who placed the order.
+     */
     @Transactional(readOnly = true)
-    public OrderDto getOrderByNumber(String number) {
+    public OrderDto getOrderByNumber(String number, String viewerEmail) {
         Order order = orderRepository.findByNumber(number)
                 .orElseThrow(() -> new NotFoundException("Order " + number + " not found"));
-        return OrderDto.mapEntityToDto(order);
+        OrderDto dto = OrderDto.mapEntityToDto(order);
+        if (!isPlacedBy(order, viewerEmail)) {
+            dto.setRating(null);
+        }
+        return dto;
+    }
+
+    private static boolean isPlacedBy(Order order, String email) {
+        return email != null
+                && order.getCustomer() != null
+                && order.getCustomer().getEmail() != null
+                && order.getCustomer().getEmail().equalsIgnoreCase(email.trim());
     }
 
     /**
