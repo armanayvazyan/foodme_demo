@@ -2,6 +2,8 @@ package am.foodme.backend;
 
 import am.foodme.backend.exceptionHandler.BadRequestException;
 import am.foodme.backend.repository.OrderRepository;
+import am.foodme.backend.repository.OrderRatingRepository;
+import am.foodme.backend.security.JwtService;
 import am.foodme.backend.service.AdminOrderService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.MethodOrderer;
@@ -9,8 +11,10 @@ import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.hamcrest.Matchers.nullValue;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -19,6 +23,8 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
+import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -45,7 +51,13 @@ class OrderControllerTest {
     private OrderRepository orderRepository;
 
     @Autowired
+    private OrderRatingRepository orderRatingRepository;
+
+    @Autowired
     private AdminOrderService adminOrderService;
+
+    @Autowired
+    private JwtService jwtService;
 
     private final AtomicInteger customerSeq = new AtomicInteger();
 
@@ -174,13 +186,55 @@ class OrderControllerTest {
     // ordered tests above and do not change which order is FM-100001.
 
     private String placeOrder(String token) throws Exception {
+        return placeOrder(token, cashOrderPayload());
+    }
+
+    private String placeOrder(String token, String payload) throws Exception {
         String response = mockMvc.perform(post("/api/order")
                         .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(cashOrderPayload()))
+                        .content(payload))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
         return objectMapper.readTree(response).get("number").asText();
+    }
+
+    private String chefTwoOrderPayload() throws Exception {
+        Map<String, Object> body = Map.of(
+                "chefId", 2,
+                "receiverName", "Ann",
+                "receiverPhoneNumber", "+37491234567",
+                "receiverEmail", "ann@example.com",
+                "paymentType", "CASH",
+                "deliveryMethod", "TAKEAWAY",
+                "createOrderDishes", List.of(Map.of("dishId", 3, "quantity", 1))
+        );
+        return objectMapper.writeValueAsString(body);
+    }
+
+    private String deliveredOrder(String token, String payload) throws Exception {
+        String number = placeOrder(token, payload);
+        Long id = orderId(number);
+        adminOrderService.updateStatus(id, "ACCEPTED", null);
+        adminOrderService.updateStatus(id, "DELIVERED", null);
+        return number;
+    }
+
+    private String ratingPayload(Object rating, String comment) throws Exception {
+        Map<String, Object> body = new HashMap<>();
+        body.put("rating", rating);
+        if (comment != null) {
+            body.put("comment", comment);
+        }
+        return objectMapper.writeValueAsString(body);
+    }
+
+    private void submitRating(String token, String number, int rating) throws Exception {
+        mockMvc.perform(post("/api/customer/orders/" + number + "/rating")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(ratingPayload(rating, null)))
+                .andExpect(status().isOk());
     }
 
     private Long orderId(String number) {
@@ -297,5 +351,180 @@ class OrderControllerTest {
             assertEquals("Cannot transition order from CANCELLED to " + target, ex.getMessage());
         }
         assertEquals("CANCELLED", orderStatus(number));
+    }
+
+    @Test
+    void rateOrder_deliveredOwnOrder_persistsAndReturnsReview() throws Exception {
+        String token = customerToken();
+        String number = deliveredOrder(token, cashOrderPayload());
+        String comment = "A great meal";
+
+        mockMvc.perform(post("/api/customer/orders/" + number + "/rating")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(ratingPayload(5, comment)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.review.rating").value(5))
+                .andExpect(jsonPath("$.review.comment").value(comment))
+                .andExpect(jsonPath("$.review.createdAt").isNotEmpty())
+                .andExpect(jsonPath("$.chefRating").isNotEmpty());
+
+        var saved = orderRatingRepository.findByOrderId(orderId(number)).orElseThrow();
+        assertEquals(5, saved.getRating());
+        assertEquals(comment, saved.getComment());
+        assertNotNull(saved.getCreatedAt());
+
+        mockMvc.perform(get("/api/customer/orders/" + number)
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.review.rating").value(5))
+                .andExpect(jsonPath("$.review.comment").value(comment));
+        mockMvc.perform(get("/api/order/number/" + number))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.review").value(nullValue()));
+    }
+
+    @Test
+    void publicTracking_doesNotExposeReviewDetails() throws Exception {
+        String token = customerToken();
+        String number = deliveredOrder(token, cashOrderPayload());
+        submitRating(token, number, 5);
+
+        mockMvc.perform(get("/api/order/number/" + number))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.review").value(nullValue()));
+    }
+
+    @Test
+    void otherCustomer_cannotReadReviewFromOrderDetails() throws Exception {
+        String ownerToken = customerToken();
+        String number = deliveredOrder(ownerToken, cashOrderPayload());
+        submitRating(ownerToken, number, 5);
+
+        mockMvc.perform(get("/api/customer/orders/" + number)
+                        .header("Authorization", "Bearer " + customerToken()))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void rateOrder_requiresCustomerAuthentication() throws Exception {
+        String token = customerToken();
+        String number = deliveredOrder(token, cashOrderPayload());
+
+        mockMvc.perform(post("/api/customer/orders/" + number + "/rating")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(ratingPayload(4, null)))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void rateOrder_nonCustomerRole_isForbidden() throws Exception {
+        String customerToken = customerToken();
+        String number = deliveredOrder(customerToken, cashOrderPayload());
+        String adminToken = jwtService.generateToken("order-rating-admin", "ADMIN");
+
+        mockMvc.perform(post("/api/customer/orders/" + number + "/rating")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(ratingPayload(4, null)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void rateOrder_otherCustomersOrder_returnsNotFound() throws Exception {
+        String number = deliveredOrder(customerToken(), cashOrderPayload());
+
+        mockMvc.perform(post("/api/customer/orders/" + number + "/rating")
+                        .header("Authorization", "Bearer " + customerToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(ratingPayload(4, null)))
+                .andExpect(status().isNotFound());
+
+        assertTrue(orderRatingRepository.findByOrderId(orderId(number)).isEmpty());
+    }
+
+    @Test
+    void rateOrder_undeliveredOrder_returnsRequiredMessage() throws Exception {
+        String token = customerToken();
+        String number = placeOrder(token);
+
+        mockMvc.perform(post("/api/customer/orders/" + number + "/rating")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(ratingPayload(4, null)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Only delivered orders can be reviewed."));
+    }
+
+    @Test
+    void rateOrder_duplicate_returnsRequiredMessage() throws Exception {
+        String token = customerToken();
+        String number = deliveredOrder(token, cashOrderPayload());
+        submitRating(token, number, 4);
+
+        mockMvc.perform(post("/api/customer/orders/" + number + "/rating")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(ratingPayload(5, "Second review")))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Order already reviewed."));
+
+        assertEquals(4, orderRatingRepository.findByOrderId(orderId(number)).orElseThrow().getRating());
+    }
+
+    @Test
+    void rateOrder_rejectsOutOfRangeFractionalAndLongComments() throws Exception {
+        String token = customerToken();
+        String number = deliveredOrder(token, cashOrderPayload());
+
+        for (Object invalidRating : List.of(0, 6, new BigDecimal("2.5"))) {
+            mockMvc.perform(post("/api/customer/orders/" + number + "/rating")
+                            .header("Authorization", "Bearer " + token)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(ratingPayload(invalidRating, null)))
+                    .andExpect(status().isBadRequest());
+        }
+
+        mockMvc.perform(post("/api/customer/orders/" + number + "/rating")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(ratingPayload(5, "x".repeat(1001))))
+                .andExpect(status().isBadRequest());
+
+        mockMvc.perform(post("/api/customer/orders/" + number + "/rating")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(ratingPayload(null, null)))
+                .andExpect(status().isBadRequest());
+
+        assertTrue(orderRatingRepository.findByOrderId(orderId(number)).isEmpty());
+    }
+
+    @Test
+    void rateOrder_acceptsLowerBoundaryAndMaximumCommentLength() throws Exception {
+        String token = customerToken();
+        String number = deliveredOrder(token, cashOrderPayload());
+        String comment = "x".repeat(1000);
+
+        mockMvc.perform(post("/api/customer/orders/" + number + "/rating")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(ratingPayload(1, comment)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.review.rating").value(1))
+                .andExpect(jsonPath("$.review.comment").value(comment));
+    }
+
+    @Test
+    void rateOrder_averagesChefRatingsAndRoundsToOneDecimal() throws Exception {
+        String payload = chefTwoOrderPayload();
+        for (int rating : List.of(4, 4, 4, 5)) {
+            String token = customerToken();
+            submitRating(token, deliveredOrder(token, payload), rating);
+        }
+
+        mockMvc.perform(get("/api/chef/2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.rating").value(4.3));
     }
 }

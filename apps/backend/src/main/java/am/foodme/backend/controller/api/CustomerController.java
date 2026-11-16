@@ -3,15 +3,20 @@ package am.foodme.backend.controller.api;
 import am.foodme.backend.dto.CustomerProfileDto;
 import am.foodme.backend.dto.OrderDto;
 import am.foodme.backend.dto.OrderListResponseDto;
+import am.foodme.backend.dto.OrderRatingRequestDto;
+import am.foodme.backend.dto.OrderRatingSubmissionDto;
 import am.foodme.backend.service.CustomerAuthService;
 import am.foodme.backend.service.OrderService;
+import am.foodme.backend.service.OrderRatingService;
 import am.foodme.backend.utils.ControllerUtil;
+import jakarta.validation.Valid;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -20,10 +25,14 @@ public class CustomerController {
 
     private final CustomerAuthService customerAuthService;
     private final OrderService orderService;
+    private final OrderRatingService orderRatingService;
 
-    public CustomerController(CustomerAuthService customerAuthService, OrderService orderService) {
+    public CustomerController(CustomerAuthService customerAuthService,
+                              OrderService orderService,
+                              OrderRatingService orderRatingService) {
         this.customerAuthService = customerAuthService;
         this.orderService = orderService;
+        this.orderRatingService = orderRatingService;
     }
 
     @GetMapping("/me")
@@ -46,5 +55,12 @@ public class CustomerController {
     @PostMapping("/orders/{number}/cancel")
     public OrderDto cancelOrder(Authentication authentication, @PathVariable String number) {
         return orderService.cancelForCustomer(number, authentication.getName());
+    }
+
+    @PostMapping("/orders/{number}/rating")
+    public OrderRatingSubmissionDto rateOrder(Authentication authentication,
+                                              @PathVariable String number,
+                                              @Valid @RequestBody OrderRatingRequestDto request) {
+        return orderRatingService.rateForCustomer(number, authentication.getName(), request);
     }
 }

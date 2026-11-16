@@ -10,6 +10,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.hamcrest.Matchers.nullValue;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -34,6 +35,13 @@ class ChefControllerTest {
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.username").value("marta-k"))
                 .andExpect(jsonPath("$.dishes").isArray());
+    }
+
+    @Test
+    void getChefById_withoutCustomerRatings_doesNotExposeLegacyRating() throws Exception {
+        mockMvc.perform(get("/api/chef/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.rating").value(nullValue()));
     }
 
     // FOOD-1

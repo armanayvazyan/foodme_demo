@@ -12,7 +12,6 @@ export function ChefDetails({ chef }: ChefDetailsProps) {
   const kitchen = translate(chef.kitchen);
   const showKitchen = kitchen && !sameLabel(kitchen, name);
   const heroSrc = chef.bannerUrl || chef.avatarUrl;
-  const isNew = chef.rating == null || chef.rating === 0;
   const supportsDelivery = chef.deliveryMethods?.includes("DELIVERY");
   const supportsTakeaway = chef.deliveryMethods?.includes("TAKEAWAY");
 
@@ -51,8 +50,8 @@ export function ChefDetails({ chef }: ChefDetailsProps) {
             <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
               {showKitchen && <span className="text-zinc-500">{kitchen}</span>}
               {showKitchen && <span className="text-zinc-300">·</span>}
-              {isNew ? (
-                <span className="font-bold text-amber-500">New</span>
+              {chef.rating == null ? (
+                <span className="font-semibold text-zinc-500">No ratings yet</span>
               ) : (
                 <span className="inline-flex items-center gap-1 font-semibold">
                   <Star size={14} className="text-amber-500" fill="currentColor" />

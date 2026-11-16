@@ -10,7 +10,7 @@ const ChefList = () => (
             <TextField source="id" />
             <TextField source="username" />
             <TextField source="phoneNumber" label="Phone" />
-            <NumberField source="rating" />
+            <NumberField source="rating" emptyText="No ratings yet" options={{ minimumFractionDigits: 1, maximumFractionDigits: 1 }} />
             <ChipField source="status" />
             <NumberField source="deliveryPrice" label="Delivery price" options={{ style: 'currency', currency: 'AMD' }} />
             <NumberField source="freeDeliveryFrom" label="Free delivery from" options={{ style: 'currency', currency: 'AMD' }} />

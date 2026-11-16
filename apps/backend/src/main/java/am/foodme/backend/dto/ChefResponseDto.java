@@ -33,7 +33,7 @@ public class ChefResponseDto {
     private Double freeDeliveryFrom;
     private Integer priorityIndex;
 
-    public static ChefResponseDto mapEntityToDto(Chef chef) {
+    public static ChefResponseDto mapEntityToDto(Chef chef, Double rating) {
         if (chef == null) {
             return null;
         }
@@ -54,7 +54,7 @@ public class ChefResponseDto {
         dto.setKitchenEn(chef.getKitchenEn());
         dto.setKitchenHy(chef.getKitchenAm());
         dto.setKitchenRu(chef.getKitchenRu());
-        dto.setRating(chef.getRating());
+        dto.setRating(rating);
         dto.setPlatformFee(chef.getPlatformFee());
         dto.setDeliveryPrice(chef.getDeliveryPrice());
         dto.setFreeDeliveryFrom(chef.getFreeDeliveryFrom());

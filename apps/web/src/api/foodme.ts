@@ -14,6 +14,7 @@ import type {
   OrderCreateResponseDto,
   OrderDto,
   OrderListResponseDto,
+  OrderRatingSubmissionDto,
 } from "@/types";
 
 export const foodmeApi = {
@@ -53,4 +54,10 @@ export const foodmeApi = {
 
   cancelMyOrder: (number: string) =>
     apiClient.post<FullOrderDto>(`/api/customer/orders/${encodeURIComponent(number)}/cancel`, {}),
+
+  rateMyOrder: (number: string, rating: number, comment: string) =>
+    apiClient.post<OrderRatingSubmissionDto>(
+      `/api/customer/orders/${encodeURIComponent(number)}/rating`,
+      { rating, comment: comment || null },
+    ),
 };

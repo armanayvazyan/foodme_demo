@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { formatAmd } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
+import { OrderReview } from "@/components/sections/order-rating";
 
 const STEPS = [
   { key: "NEW", label: "Received", Icon: Package },
@@ -59,11 +60,11 @@ export default function Tracking() {
     enabled: !!number,
   });
 
-  // Tracking links are public, so check ownership before offering cancellation.
-  const ownership = useQuery({
+  // Public tracking omits reviews; this owner-scoped query supplies review data and cancellation access.
+  const customerOrder = useQuery({
     queryKey: ["my-order", number, customer?.id],
     queryFn: () => foodmeApi.getMyOrder(number as string),
-    enabled: isAuthenticated && !!number && data?.status === "NEW",
+    enabled: isAuthenticated && !!number,
     retry: false,
   });
 
@@ -124,7 +125,7 @@ export default function Tracking() {
   const rejected = data.status === "REJECTED";
   const cancelled = data.status === "CANCELLED";
   // The backend also enforces ownership and NEW status; this only decides visibility.
-  const canCancel = isAuthenticated && data.status === "NEW" && ownership.isSuccess;
+  const canCancel = isAuthenticated && data.status === "NEW" && customerOrder.isSuccess;
 
   return (
     <div className="tp_wrap mx-auto max-w-7xl px-4 py-10 md:px-8 md:py-14">
@@ -267,6 +268,15 @@ export default function Tracking() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {customerOrder.data?.review && (
+        <div className="bezel-outer shadow-diffuse mt-5 animate-fade-up [animation-delay:90ms]">
+          <div className="bezel-inner p-5">
+            <p className="mb-2 text-base font-bold text-zinc-900">Customer review</p>
+            <OrderReview review={customerOrder.data.review} />
+          </div>
+        </div>
+      )}
 
       <div className="bezel-outer shadow-diffuse mt-5 animate-fade-up [animation-delay:120ms]">
         <div className="bezel-inner overflow-hidden">

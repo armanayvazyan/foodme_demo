@@ -29,8 +29,9 @@ public class AdminChefService {
     }
 
     public Chef update(Long id, Chef chef) {
-        getById(id);
+        Chef existing = getById(id);
         chef.setId(id);
+        chef.setRating(existing.getRating());
         return chefRepository.save(chef);
     }
 }
