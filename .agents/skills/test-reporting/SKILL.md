@@ -62,7 +62,7 @@ One candidate per case. Don't merge cases or guess a shared cause yourself; the 
 ```json
 {
   "run": "KAN-27",
-  "sut": "https://foodme-armanayvazyan-wox5.onrender.com/",
+  "sut": "https://foodme-armanayvazyan-5cz9.onrender.com/",
   "issues": [
     {
       "id": "KAN-27-ISSUE-01",

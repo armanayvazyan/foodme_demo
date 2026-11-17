@@ -60,6 +60,7 @@ infra/docker-compose.local.yml
 
 # --- Agent tooling (.claude -> .agents) ----------------------------------
 .agents/settings.local.json
+.claude/settings.local.json
 .agents/worktrees/
 
 # AgentSecrets environment files

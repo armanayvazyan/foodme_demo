@@ -1,0 +1,1 @@
+../.agents/statusline.sh
