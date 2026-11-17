@@ -3,16 +3,23 @@ import { OrderStatus, OrderStatusColors, OrderStatusTransitions } from './OrderS
 
 describe('OrderStatusTransitions', () => {
     it('lets a new order be accepted or rejected', () => {
-        expect(OrderStatusTransitions.NEW).toEqual([OrderStatus.ACCEPTED, OrderStatus.REJECTED]);
+        expect(OrderStatusTransitions[OrderStatus.NEW]).toEqual([OrderStatus.ACCEPTED, OrderStatus.REJECTED]);
     });
+
     it('lets an accepted order be delivered or rejected', () => {
-        expect(OrderStatusTransitions.ACCEPTED).toEqual([OrderStatus.DELIVERED, OrderStatus.REJECTED]);
+        expect(OrderStatusTransitions[OrderStatus.ACCEPTED]).toEqual([OrderStatus.DELIVERED, OrderStatus.REJECTED]);
     });
+
     it('treats delivered and rejected as final', () => {
-        expect(OrderStatusTransitions.DELIVERED).toEqual([]);
-        expect(OrderStatusTransitions.REJECTED).toEqual([]);
+        expect(OrderStatusTransitions[OrderStatus.DELIVERED]).toEqual([]);
+        expect(OrderStatusTransitions[OrderStatus.REJECTED]).toEqual([]);
     });
-    it('has a colour for every status', () => {
-        for (const s of Object.values(OrderStatus)) expect(OrderStatusColors[s]).toBeTruthy();
+});
+
+describe('OrderStatusColors', () => {
+    it('has a color for every status', () => {
+        for (const status of Object.values(OrderStatus)) {
+            expect(OrderStatusColors[status]).toBeTruthy();
+        }
     });
 });
