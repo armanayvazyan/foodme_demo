@@ -165,7 +165,7 @@ public class OrderService {
     public OrderDto getOrderByNumber(String number) {
         Order order = orderRepository.findByNumber(number)
                 .orElseThrow(() -> new NotFoundException("Order " + number + " not found"));
-        return OrderDto.mapEntityToDto(order);
+        return OrderDto.mapPublicTrackingEntityToDto(order);
     }
 
     /** Returns the order only if it belongs to the customer; another customer's order is not found. */

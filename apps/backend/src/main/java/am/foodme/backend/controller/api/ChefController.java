@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping(ControllerUtil.API_CHEF_CONTROLLER)
@@ -31,9 +30,7 @@ public class ChefController {
     public Map<String, Object> getActiveChefs(@RequestParam(defaultValue = "0") int page,
                                                @RequestParam(defaultValue = "12") int size) {
         ChefService.ActiveChefsResult result = chefService.getActiveChefsPage(page, size);
-        List<ExploreChefResponseDto> list = result.chefs().stream()
-                .map(ExploreChefResponseDto::mapEntityToDto)
-                .collect(Collectors.toList());
+        List<ExploreChefResponseDto> list = chefService.toExploreDtos(result.chefs());
 
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("exploreChefResponseDtoList", list);

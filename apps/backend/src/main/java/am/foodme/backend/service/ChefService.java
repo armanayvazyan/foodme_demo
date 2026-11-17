@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -27,11 +28,16 @@ public class ChefService {
     private final ChefRepository chefRepository;
     private final DishRepository dishRepository;
     private final ChefTagOrderRepository chefTagOrderRepository;
+    private final ChefRatingService chefRatingService;
 
-    public ChefService(ChefRepository chefRepository, DishRepository dishRepository, ChefTagOrderRepository chefTagOrderRepository) {
+    public ChefService(ChefRepository chefRepository,
+                       DishRepository dishRepository,
+                       ChefTagOrderRepository chefTagOrderRepository,
+                       ChefRatingService chefRatingService) {
         this.chefRepository = chefRepository;
         this.dishRepository = dishRepository;
         this.chefTagOrderRepository = chefTagOrderRepository;
+        this.chefRatingService = chefRatingService;
     }
 
     public ActiveChefsResult getActiveChefsPage(int page, int size) {
@@ -60,7 +66,8 @@ public class ChefService {
     }
 
     public ExploreChefResponseDto toExploreDtoWithDishes(Chef chef) {
-        ExploreChefResponseDto dto = ExploreChefResponseDto.mapEntityToDto(chef);
+        ExploreChefResponseDto dto = ExploreChefResponseDto.mapEntityToDto(
+                chef, chefRatingService.getAverage(chef.getId()));
         List<ChefTagOrder> tagOrders = chefTagOrderRepository.findByChefIdOrderByPriorityIndexAsc(chef.getId());
         Map<Long, Integer> tagPriorityMap = tagOrders.stream()
                 .collect(Collectors.toMap(o -> o.getDishTag().getId(), ChefTagOrder::getPriorityIndex));
@@ -79,6 +86,14 @@ public class ChefService {
                 .collect(Collectors.toList());
         dto.setDishes(sortedDishes);
         return dto;
+    }
+
+    public List<ExploreChefResponseDto> toExploreDtos(Collection<Chef> chefs) {
+        Map<Long, Double> averages = chefRatingService.getAverages(
+                chefs.stream().map(Chef::getId).toList());
+        return chefs.stream()
+                .map(chef -> ExploreChefResponseDto.mapEntityToDto(chef, averages.get(chef.getId())))
+                .toList();
     }
 
     public List<ChefTagOrderWithDishTagDto> getTagOrdersForChef(Long chefId) {

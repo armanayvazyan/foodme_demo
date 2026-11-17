@@ -63,7 +63,7 @@ export interface ExploreChefResponseDto {
   name: ITranslation[];
   description: ITranslation[];
   kitchen: ITranslation[];
-  rating: number;
+  rating: number | null;
   status: string;
   phoneNumber: string;
   deliveryPrice: number;
@@ -170,6 +170,18 @@ export interface OrderListResponseDto {
   count: number;
 }
 
+export interface OrderRatingDto {
+  rating: number;
+  comment: string | null;
+  createdAt: string;
+}
+
+export interface OrderRatingSubmissionDto {
+  review: OrderRatingDto;
+  chefId: number;
+  chefRating: number;
+}
+
 export interface FullOrderDto {
   number: string;
   status: string;
@@ -185,6 +197,7 @@ export interface FullOrderDto {
   orderDishList: OrderDishDto[];
   totalPrice: number;
   createdAt: string;
+  review: OrderRatingDto | null;
 }
 
 export interface ApiError {

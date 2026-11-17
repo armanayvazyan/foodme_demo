@@ -32,9 +32,18 @@ public class OrderDto {
     private AddressDto addressDto;
     private List<CreateOrderDishDto> createOrderDishes;
     private List<OrderDishDto> orderDishList;
+    private OrderRatingDto review;
     private LocalDateTime createdAt;
 
     public static OrderDto mapEntityToDto(Order entity) {
+        return mapEntityToDto(entity, true);
+    }
+
+    public static OrderDto mapPublicTrackingEntityToDto(Order entity) {
+        return mapEntityToDto(entity, false);
+    }
+
+    private static OrderDto mapEntityToDto(Order entity, boolean includeReview) {
         if (entity == null) {
             return null;
         }
@@ -58,6 +67,9 @@ public class OrderDto {
             dto.setOrderDishList(entity.getOrderDishList().stream()
                     .map(OrderDishDto::mapEntityToDto)
                     .collect(Collectors.toList()));
+        }
+        if (includeReview) {
+            dto.setReview(OrderRatingDto.mapEntityToDto(entity.getReview()));
         }
         // FM-BUG-06
         dto.setCreatedAt(entity.getCreatedAt());

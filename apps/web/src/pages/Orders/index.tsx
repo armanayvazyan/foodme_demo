@@ -1,10 +1,13 @@
+import { useState } from "react";
 import { Link, Navigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronRight, Package } from "lucide-react";
 import { foodmeApi } from "@/api/foodme";
 import { Button } from "@/components/ui/button";
+import { OrderRatingDialog, OrderReview } from "@/components/sections/order-rating";
 import { useAuth } from "@/providers/auth-provider";
 import { formatAmd } from "@/lib/utils";
+import type { ChefsPageDto, ExploreChefResponseDto, OrderListResponseDto } from "@/types";
 
 const STATUS_LABEL: Record<string, string> = {
   NEW: "Received",
@@ -34,11 +37,45 @@ function formatOrderDate(value: string) {
 
 export default function Orders() {
   const { isAuthenticated, customer, logout } = useAuth();
+  const [ratingOrderNumber, setRatingOrderNumber] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["my-orders", customer?.id],
     queryFn: () => foodmeApi.getMyOrders(),
     enabled: isAuthenticated,
+  });
+
+  const ratingMutation = useMutation({
+    mutationFn: ({ number, rating, comment }: { number: string; rating: number; comment: string }) =>
+      foodmeApi.rateMyOrder(number, rating, comment),
+    onSuccess: (result, variables) => {
+      queryClient.setQueryData<OrderListResponseDto>(["my-orders", customer?.id], (current) =>
+        current
+          ? {
+              ...current,
+              list: current.list.map((order) =>
+                order.number === variables.number ? { ...order, review: result.review } : order,
+              ),
+            }
+          : current,
+      );
+      queryClient.setQueryData<ExploreChefResponseDto>(
+        ["chef", result.chefId],
+        (current) => current ? { ...current, rating: result.chefRating } : current,
+      );
+      queryClient.setQueriesData<ChefsPageDto>({ queryKey: ["chefs"] }, (current) =>
+        current
+          ? {
+              ...current,
+              exploreChefResponseDtoList: current.exploreChefResponseDtoList.map((chef) =>
+                chef.id === result.chefId ? { ...chef, rating: result.chefRating } : chef,
+              ),
+            }
+          : current,
+      );
+      setRatingOrderNumber(null);
+    },
   });
 
   if (!isAuthenticated) {
@@ -95,12 +132,10 @@ export default function Orders() {
         <ul className="space-y-3">
           {data.list.map((order) => (
             <li key={order.number}>
-              <Link
-                to={`/tracking/${order.number}`}
-                className="bezel-outer shadow-diffuse block transition-transform duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] hover:-translate-y-px active:scale-[0.99]"
-              >
+              <div className="bezel-outer shadow-diffuse block transition-transform duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] hover:-translate-y-px">
                 <div className="bezel-inner flex items-center gap-4 px-5 py-4">
-                  <div className="min-w-0 flex-1">
+                  <Link to={`/tracking/${order.number}`} className="flex min-w-0 flex-1 items-center gap-4 active:scale-[0.99]">
+                    <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="font-display text-lg font-bold text-zinc-900">
                         {order.number}
@@ -113,19 +148,55 @@ export default function Orders() {
                       {order.chefName}
                       {order.createdAt ? ` · ${formatOrderDate(order.createdAt)}` : ""}
                     </p>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-2">
-                    <span className="font-semibold tabular-nums text-zinc-900">
-                      {formatAmd(order.totalPrice)}
-                    </span>
-                    <ChevronRight size={16} strokeWidth={2} className="text-zinc-400" />
-                  </div>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <span className="font-semibold tabular-nums text-zinc-900">
+                        {formatAmd(order.totalPrice)}
+                      </span>
+                      <ChevronRight size={16} strokeWidth={2} className="text-zinc-400" />
+                    </div>
+                  </Link>
                 </div>
-              </Link>
+                {(order.review || (order.status === "DELIVERED" && !order.review)) && (
+                  <div className="border-t border-zinc-100 px-5 py-3">
+                    {order.review ? (
+                      <OrderReview review={order.review} />
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          ratingMutation.reset();
+                          setRatingOrderNumber(order.number);
+                        }}
+                      >
+                        Rate order
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
             </li>
           ))}
         </ul>
       )}
+      <OrderRatingDialog
+        key={ratingOrderNumber ?? "closed"}
+        open={ratingOrderNumber !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setRatingOrderNumber(null);
+            ratingMutation.reset();
+          }
+        }}
+        onSubmit={(rating, comment) => {
+          if (ratingOrderNumber) {
+            ratingMutation.mutate({ number: ratingOrderNumber, rating, comment });
+          }
+        }}
+        isPending={ratingMutation.isPending}
+        error={ratingMutation.error instanceof Error ? ratingMutation.error.message : null}
+      />
     </div>
   );
 }

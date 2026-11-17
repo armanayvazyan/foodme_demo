@@ -4,6 +4,7 @@ import am.foodme.backend.dto.AdminListResponseDto;
 import am.foodme.backend.dto.ChefResponseDto;
 import am.foodme.backend.model.Chef;
 import am.foodme.backend.service.AdminChefService;
+import am.foodme.backend.service.ChefRatingService;
 import am.foodme.backend.utils.ControllerUtil;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,9 +23,11 @@ import java.util.stream.Collectors;
 public class AdminChefController {
 
     private final AdminChefService adminChefService;
+    private final ChefRatingService chefRatingService;
 
-    public AdminChefController(AdminChefService adminChefService) {
+    public AdminChefController(AdminChefService adminChefService, ChefRatingService chefRatingService) {
         this.adminChefService = adminChefService;
+        this.chefRatingService = chefRatingService;
     }
 
     @GetMapping
@@ -32,19 +35,23 @@ public class AdminChefController {
                                                         @RequestParam(defaultValue = "20") int size,
                                                         @RequestParam(required = false) String q) {
         Page<Chef> chefPage = adminChefService.list(page, size, q);
+        var averages = chefRatingService.getAverages(
+                chefPage.getContent().stream().map(Chef::getId).toList());
         List<ChefResponseDto> list = chefPage.getContent().stream()
-                .map(ChefResponseDto::mapEntityToDto)
+                .map(chef -> ChefResponseDto.mapEntityToDto(chef, averages.get(chef.getId())))
                 .collect(Collectors.toList());
         return new AdminListResponseDto<>(list, chefPage.getTotalElements());
     }
 
     @GetMapping("/{id}")
     public ChefResponseDto getById(@PathVariable Long id) {
-        return ChefResponseDto.mapEntityToDto(adminChefService.getById(id));
+        Chef chef = adminChefService.getById(id);
+        return ChefResponseDto.mapEntityToDto(chef, chefRatingService.getAverage(chef.getId()));
     }
 
     @PutMapping("/{id}")
     public ChefResponseDto update(@PathVariable Long id, @RequestBody Chef chef) {
-        return ChefResponseDto.mapEntityToDto(adminChefService.update(id, chef));
+        Chef updated = adminChefService.update(id, chef);
+        return ChefResponseDto.mapEntityToDto(updated, chefRatingService.getAverage(updated.getId()));
     }
 }

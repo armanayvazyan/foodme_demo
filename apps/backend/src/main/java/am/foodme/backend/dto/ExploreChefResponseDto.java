@@ -28,7 +28,7 @@ public class ExploreChefResponseDto {
     private List<String> deliveryMethods;
     private List<DishDto> dishes;
 
-    public static ExploreChefResponseDto mapEntityToDto(Chef chef) {
+    public static ExploreChefResponseDto mapEntityToDto(Chef chef, Double rating) {
         if (chef == null) {
             return null;
         }
@@ -40,7 +40,7 @@ public class ExploreChefResponseDto {
         dto.setName(NameDtoTranslation.mapChefToTranslations(chef));
         dto.setDescription(DescriptionDtoTranslation.mapChefToTranslations(chef));
         dto.setKitchen(KitchenDtoTranslation.mapChefToTranslations(chef));
-        dto.setRating(chef.getRating());
+        dto.setRating(rating);
         dto.setStatus(chef.getStatus());
         dto.setPhoneNumber(chef.getPhoneNumber());
         dto.setDeliveryPrice(chef.getDeliveryPrice());

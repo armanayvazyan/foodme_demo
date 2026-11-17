@@ -44,6 +44,41 @@ async function createOrderViaApi(request: import("@playwright/test").APIRequestC
   return { ...(await createRes.json()), customerToken: token as string };
 }
 
+async function findAdminOrder(
+  request: import("@playwright/test").APIRequestContext,
+  orderNumber: string,
+) {
+  const login = await request.post(`${API}/admin/auth/login`, {
+    data: { username: "admin", password: "admin123" },
+  });
+  expect(login.ok()).toBeTruthy();
+  const { token } = await login.json();
+  const headers = { Authorization: `Bearer ${token}` };
+  const response = await request.get(`${API}/admin/order?page=0&size=50`, { headers });
+  expect(response.ok()).toBeTruthy();
+  const body = await response.json();
+  const order = (body.list as { id: number; number: string }[]).find(
+    (item) => item.number === orderNumber,
+  );
+  expect(order).toBeTruthy();
+  return { orderId: order!.id, headers };
+}
+
+async function updateOrderStatusViaApi(
+  request: import("@playwright/test").APIRequestContext,
+  orderNumber: string,
+  statuses: string[],
+) {
+  const { orderId, headers } = await findAdminOrder(request, orderNumber);
+  for (const status of statuses) {
+    const response = await request.patch(`${API}/admin/order/${orderId}/status`, {
+      headers,
+      data: { status },
+    });
+    expect(response.ok()).toBeTruthy();
+  }
+}
+
 test.describe("Admin auth", () => {
   test("rejects bad password", async ({ page }) => {
     await page.goto("/#/login");
@@ -87,6 +122,47 @@ test.describe("Admin resources", () => {
     await page.getByRole("button", { name: "Mark as ACCEPTED" }).click();
     await expect(page.getByText("Order status updated")).toBeVisible({ timeout: 10000 });
     await expect(page.getByText("ACCEPTED").first()).toBeVisible();
+    await expect(page.getByText("Customer review")).toHaveCount(0);
+  });
+
+  test("delivered order details show the customer review", async ({ page, request }) => {
+    const order = await createOrderViaApi(request);
+    await updateOrderStatusViaApi(request, order.number, ["ACCEPTED", "DELIVERED"]);
+    const reviewResponse = await request.post(
+      `${API}/api/customer/orders/${order.number}/rating`,
+      {
+        headers: { Authorization: `Bearer ${order.customerToken}` },
+        data: { rating: 5, comment: "Handled with care" },
+      },
+    );
+    expect(reviewResponse.ok()).toBeTruthy();
+
+    await page.goto("/#/orders");
+    await page.getByRole("button", { name: "Refresh" }).click();
+    await page.getByText(order.number).click();
+
+    await expect(page.getByText("Customer review")).toBeVisible();
+    await expect(page.getByRole("img", { name: "5 out of 5 stars" })).toBeVisible();
+    await expect(page.getByText("Handled with care")).toBeVisible();
+  });
+
+  test("delivered unrated order says No review yet; undelivered order hides section", async ({
+    page,
+    request,
+  }) => {
+    const delivered = await createOrderViaApi(request);
+    await updateOrderStatusViaApi(request, delivered.number, ["ACCEPTED", "DELIVERED"]);
+
+    await page.goto("/#/orders");
+    await page.getByRole("button", { name: "Refresh" }).click();
+    await page.getByText(delivered.number).click();
+    await expect(page.getByText("No review yet")).toBeVisible();
+
+    const pending = await createOrderViaApi(request);
+    await page.goto("/#/orders");
+    await page.getByRole("button", { name: "Refresh" }).click();
+    await page.getByText(pending.number).click();
+    await expect(page.getByText("Customer review")).toHaveCount(0);
   });
 
   // FOOD-3: a customer-cancelled order is labelled CANCELLED and offers no status changes.

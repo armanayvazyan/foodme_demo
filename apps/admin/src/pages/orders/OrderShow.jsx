@@ -164,6 +164,36 @@ const OrderDetails = () => {
                     <Typography variant="h6">{record.totalPrice} AMD</Typography>
                 </Stack>
 
+                {record.status === OrderStatus.DELIVERED && (
+                    <>
+                        <Divider sx={{ my: 2 }} />
+                        <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+                            Customer review
+                        </Typography>
+                        {record.review ? (
+                            <Stack spacing={0.75}>
+                                <Typography
+                                    role="img"
+                                    aria-label={`${record.review.rating} out of 5 stars`}
+                                    sx={{ color: 'warning.main', letterSpacing: 1 }}
+                                >
+                                    {'★'.repeat(record.review.rating)}{'☆'.repeat(5 - record.review.rating)}
+                                </Typography>
+                                {record.review.comment && (
+                                    <Typography sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
+                                        {record.review.comment}
+                                    </Typography>
+                                )}
+                                <Typography variant="caption" color="text.secondary">
+                                    {new Date(record.review.createdAt).toLocaleDateString()}
+                                </Typography>
+                            </Stack>
+                        ) : (
+                            <Typography color="text.secondary">No review yet</Typography>
+                        )}
+                    </>
+                )}
+
                 {availableTransitions.length > 0 && (
                     <>
                         <Divider sx={{ my: 2 }} />

@@ -11,7 +11,6 @@ interface ChefCardProps {
 export function ChefCard({ chef }: ChefCardProps) {
   const name = translate(chef.name);
   const kitchen = translate(chef.kitchen);
-  const isNew = chef.rating == null || chef.rating === 0;
   const metadata =
     sameLabel(kitchen, name)
       ? "25–40 min"
@@ -36,8 +35,14 @@ export function ChefCard({ chef }: ChefCardProps) {
           <p className="mt-0.5 truncate text-sm text-zinc-500">{metadata}</p>
         </div>
         <span className="flex h-8 shrink-0 items-center justify-center gap-1 rounded-full bg-zinc-100 px-2.5 text-xs font-bold text-zinc-900">
-          <Star size={12} className="text-amber-500" fill="currentColor" />
-          {isNew ? "New" : chef.rating.toFixed(1)}
+          {chef.rating == null ? (
+            "No ratings yet"
+          ) : (
+            <>
+              <Star size={12} className="text-amber-500" fill="currentColor" />
+              {chef.rating.toFixed(1)}
+            </>
+          )}
         </span>
       </div>
     </Link>
