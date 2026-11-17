@@ -54,7 +54,10 @@ test.describe("Layout Tests", () => {
     const firstCard = chefCards.first();
     await expect(firstCard.locator("img")).toBeVisible();
     await expect(firstCard.locator("p.truncate").first()).toBeVisible();
-    await expect(firstCard.locator(".text-amber-500")).toBeVisible();
+    const rating = firstCard.locator(".text-amber-500");
+    const noRatings = firstCard.getByText("No ratings yet");
+
+    await expect(rating.or(noRatings)).toBeVisible();
 
     const cardName = (await firstCard.locator("p.truncate").first().textContent())?.trim();
     const metadata = (await firstCard.locator("p.truncate").nth(1).textContent())?.trim();
