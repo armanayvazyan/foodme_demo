@@ -4,6 +4,8 @@ import am.foodme.backend.dto.CustomerProfileDto;
 import am.foodme.backend.dto.OrderDto;
 import am.foodme.backend.dto.OrderListResponseDto;
 import am.foodme.backend.dto.OrderRatingRequestDto;
+import am.foodme.backend.dto.PromoApplyRequestDto;
+import am.foodme.backend.dto.PromoApplyResponseDto;
 import am.foodme.backend.service.CustomerAuthService;
 import am.foodme.backend.service.OrderRatingService;
 import am.foodme.backend.service.OrderService;
@@ -53,5 +55,10 @@ public class CustomerController {
     public OrderDto rateOrder(Authentication authentication, @PathVariable String number,
                               @RequestBody OrderRatingRequestDto request) {
         return orderRatingService.rate(authentication.getName(), number, request);
+    }
+
+    @PostMapping("/promo/apply")
+    public PromoApplyResponseDto applyPromo(@RequestBody PromoApplyRequestDto request, Authentication authentication) {
+        return orderService.applyPromo(request, authentication.getName());
     }
 }
